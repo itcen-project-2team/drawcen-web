@@ -2,7 +2,7 @@ import axios from "axios";
 
 // 기본 axios 인스턴스 생성
 const api = axios.create({
-  baseURL: process.env.REACT_APP_API_URL || "http://localhost:4000/api", // 환경변수 또는 기본값
+  baseURL: process.env.REACT_APP_API_URL, // 환경변수 
   timeout: 10000, // 10초 타임아웃
   headers: {
     "Content-Type": "application/json",
