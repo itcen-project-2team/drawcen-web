@@ -25,7 +25,7 @@ const Canvas = ({ isQuizMaster, answer, timePercent }) => {
     const canvas = canvasRef.current;
     const { width, height } = canvas;
     ctx.save();
-    ctx.fillStyle = '#f0f8ff';
+    ctx.fillStyle = '#ffffff';
     ctx.fillRect(0, 0, width, height);
     ctx.strokeStyle = 'rgba(200, 215, 255, 0.2)';
     ctx.lineWidth = 0.5;
