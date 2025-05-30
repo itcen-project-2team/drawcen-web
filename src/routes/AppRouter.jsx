@@ -6,7 +6,7 @@ import LandingPage from '../pages/landingpage/LandingPage';
 const AppRouter = () => (
   <BrowserRouter>
     <Routes>
-      <Route path="/room" element={<GameRoom/>} /> // 여기 경로 설정으로 라우팅 설정
+      <Route path="/room/:roomCode" element={<GameRoom/>} />
       <Route path="/" element={<LandingPage />} />
       {/* 다른 라우트도 여기에 추가 */}
     </Routes>

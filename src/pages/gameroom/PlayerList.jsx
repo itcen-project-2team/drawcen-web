@@ -23,10 +23,17 @@ const PlayerList = ({ players }) => {
             </div>
           </div>
         ) : (
-          <div key={player.id} className={styles.playerItem}>
+          <div key={player.id} className={`${styles.playerItem} ${player.isDrawing ? styles.drawing : ''}`}>
             <img src={player.avatar || defaultAvatar} alt="avatar" className={styles.avatar} />
             <div className={styles.playerInfo}>
-              <div className={styles.nickname}>{player.nickname}</div>
+              <div className={styles.nickname}>
+                {player.nickname}
+                {player.isDrawing && (
+                  <span className={styles.drawingIndicator}>
+                    ✏️
+                  </span>
+                )}
+              </div>
               <div className={styles.score}>{player.score}점</div>
             </div>
           </div>

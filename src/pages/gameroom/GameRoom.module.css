@@ -33,21 +33,67 @@
 
 .gameRoom {
   display: flex;
+  flex-direction: column;
   width: 100vw;
   height: 100vh;
   background: none;
-  padding: 48px;
+  padding: 24px 48px;
   gap: 24px;
   overflow: hidden;
   box-sizing: border-box;
 }
+
+/* 상단 헤더 스타일 */
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  height: 80px;
+  width: 100%;
+  padding: 0;
+  background: none;
+}
+
+.logo {
+  width: 280px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.logo img {
+  height: 80px;
+  width: auto;
+}
+
+.roomCode {
+  flex: 1;
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  padding-right: 60px;
+  font-size: 24px;
+  font-weight: 700;
+  color: #ffffff;
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+}
+
+/* 게임 콘텐츠 영역 */
+.gameContent {
+  display: flex;
+  flex: 1;
+  gap: 24px;
+  min-height: 0;
+  overflow: hidden;
+}
+
 .leftSection {
   width: 280px;
   min-width: 280px;
   height: 100%;
-  background: rgba(255,255,255,0.95);
+  background: rgba(240, 248, 255, 0.95);
   border-radius: 16px;
-  border: 1px solid rgba(255,255,255,0.3);
+  border: 1px solid rgba(179, 209, 255, 0.3);
   box-shadow: 0 8px 32px 0 rgba(31,38,135,0.18);
   overflow: hidden;
   display: flex;
@@ -65,10 +111,10 @@
 }
 .canvasSection {
   flex: 2;
-  background: rgba(255,255,255,0.95);
+  background: none;
   border-radius: 16px;
-  border: 1px solid rgba(255,255,255,0.3);
-  box-shadow: 0 8px 32px 0 rgba(31,38,135,0.18);
+  border: none;
+  box-shadow: none;
   overflow: hidden;
   display: flex;
   flex-direction: column;
@@ -78,9 +124,9 @@
 .chatSection {
   flex: 1;
   min-height: 200px;
-  background: rgba(255,255,255,0.95);
+  background: rgba(240, 248, 255, 0.95);
   border-radius: 16px;
-  border: 1px solid rgba(255,255,255,0.3);
+  border: 1px solid rgba(179, 209, 255, 0.3);
   box-shadow: 0 8px 32px 0 rgba(31,38,135,0.18);
   overflow: hidden;
   display: flex;
