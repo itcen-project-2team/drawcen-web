@@ -163,13 +163,15 @@ const Canvas = ({ isQuizMaster, answer, timePercent }) => {
             disabled={history.length === 0}
             className={styles.toolButton}
           >
-            ↩️ 되돌리기
+            <span className={styles.buttonIcon}>↩️</span>
+            <span className={styles.buttonText}>되돌리기</span>
           </button>
           <button 
             onClick={handleClear}
             className={styles.toolButton}
           >
-            🗑️ 지우기
+            <span className={styles.buttonIcon}>🗑️</span>
+            <span className={styles.buttonText}>지우기</span>
           </button>
         </div>
       </div>
