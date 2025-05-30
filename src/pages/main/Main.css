@@ -14,38 +14,50 @@
 
 .profile-container {
   position: absolute;
-  top: 20px;
-  right: 20px;
+  top: 80px;
+  right: 80px;
   display: flex;
   align-items: center;
-  gap: 10px;
-  background: rgba(0, 0, 0, 0.3);
-  padding: 8px 15px;
-  border-radius: 20px;
+  gap: 15px;
+  background: rgba(0, 0, 0, 0.6);
+  padding: 10px 24px;
+  border-radius: 25px;
   backdrop-filter: blur(10px);
+  box-shadow: 0 0 6px rgba(69, 211, 255, 0.5), 0 0 12px rgba(69, 211, 255, 0.2);
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  min-width: 150px;
+  cursor: pointer;
+  z-index: 1000;
+}
+
+.profile-container:hover {
+  background: rgba(255, 0, 0, 0.8) !important;
+  transform: scale(1.2) !important;
+  box-shadow: 0 0 50px red !important;
+  border: 3px solid yellow !important;
 }
 
 .profile-image {
-  width: 34px;
-  height: 34px;
+  width: 50px;
+  height: 50px;
   border-radius: 50%;
   background: linear-gradient(180deg, #CF83FF, #45D3FF);
-  padding: 2px;
+  padding: 3px;
   display: flex;
   align-items: center;
   justify-content: center;
 }
 
 .profile-image img {
-  width: 30px;
-  height: 30px;
+  width: 44px;
+  height: 44px;
   border-radius: 50%;
   object-fit: cover;
 }
 
 .profile-text {
   color: white;
-  font-size: 14px;
+  font-size: 18px;
   font-weight: 500;
 }
 
