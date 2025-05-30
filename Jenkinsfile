@@ -10,7 +10,7 @@ pipeline {
   stages {
     stage('Clone') {
       steps {
-        git url: 'https://github.com/itcen-project-2team/drawcen-web', branch: 'main'
+        git url: 'https://github.com/itcen-project-2team/drawcen-web', branch: 'develop'
       }
     }
     stage('Generate .env.production') {
