@@ -24,17 +24,14 @@
   border-radius: 25px;
   backdrop-filter: blur(10px);
   box-shadow: 0 0 6px rgba(69, 211, 255, 0.5), 0 0 12px rgba(69, 211, 255, 0.2);
-  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  transition: transform 0.2s ease;
   min-width: 150px;
   cursor: pointer;
   z-index: 1000;
 }
 
 .profile-container:hover {
-  background: rgba(255, 0, 0, 0.8) !important;
-  transform: scale(1.2) !important;
-  box-shadow: 0 0 50px red !important;
-  border: 3px solid yellow !important;
+  transform: scale(1.05);
 }
 
 .profile-image {
