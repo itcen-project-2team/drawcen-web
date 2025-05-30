@@ -39,15 +39,15 @@
   height: 50px;
   border-radius: 50%;
   background: linear-gradient(180deg, #CF83FF, #45D3FF);
-  padding: 3px;
+  padding: 2px;
   display: flex;
   align-items: center;
   justify-content: center;
 }
 
 .profile-image img {
-  width: 44px;
-  height: 44px;
+  width: 46px;
+  height: 46px;
   border-radius: 50%;
   object-fit: cover;
 }
@@ -295,4 +295,155 @@
   color: white;
   font-size: 24px;
   font-weight: 600;
+}
+
+/* 닉네임 수정 모달 스타일 */
+.nickname-modal {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 40px;
+  margin-top: 50px;
+}
+
+.nickname-top-buttons {
+  display: flex;
+  background: rgba(255, 255, 255, 0);
+  border-radius: 10px;
+  border: 1px solid #555D83;
+}
+
+.nickname-type-button {
+  background: transparent;
+  border: none;
+  border-radius: 10px;
+  color: #45D3FF;
+  font-size: 18px;
+  font-weight: 600;
+  padding: 10px 30px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  backdrop-filter: blur(10px);
+  box-shadow: 0 0 10px rgba(69, 211, 255, 0.5);
+  border: 1px solid #ffffff;
+}
+
+.nickname-type-button:hover {
+  background: rgba(69, 211, 255, 0.1);
+  transform: scale(1.02);
+  box-shadow: 0 0 15px rgba(69, 211, 255, 0.7);
+}
+
+.current-nickname-text {
+  background: transparent;
+  border: none;
+  border-radius: 26px;
+  color: #ffffff;
+  font-size: 18px;
+  font-weight: 500;
+  padding: 10px 30px;
+  transition: all 0.2s ease;
+}
+
+.nickname-submit-button {
+  background: linear-gradient(to bottom, rgba(69, 211, 255, 0.4) 0%, rgba(69, 211, 255, 0) 100%);
+  border: 2px solid #C9C9C9;
+  border-radius: 25px;
+  color: #45D3FF;
+  font-size: 18px;
+  font-weight: 600;
+  padding: 12px 30px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  backdrop-filter: blur(10px);
+  position: relative;
+  background-clip: padding-box;
+  box-shadow: 0 0 6px rgba(69, 211, 255, 0.5), 0 0 12px rgba(69, 211, 255, 0.2);
+}
+
+.nickname-submit-button:hover {
+  transform: scale(1.05);
+  background: linear-gradient(to bottom, rgba(69, 211, 255, 0.5) 0%, rgba(69, 211, 255, 0) 100%);
+  box-shadow: 0 0 8px rgba(69, 211, 255, 0.6), 0 0 16px rgba(69, 211, 255, 0.3);
+}
+
+/* 방 코드 입력 모달 스타일 */
+.room-code-modal {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 40px;
+  margin-top: 50px;
+  position: relative;
+}
+
+.room-code-input {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.room-code-input input {
+  width: 40px;
+  height: 60px;
+  border: 2px solid #555D83;
+  border-radius: 8px;
+  background: transparent;
+  color: white;
+  font-size: 24px;
+  font-weight: 600;
+  text-align: center;
+  outline: none;
+  transition: all 0.2s ease;
+}
+
+.room-code-input input:focus {
+  border-color: #45D3FF;
+  box-shadow: 0 0 8px rgba(69, 211, 255, 0.5);
+}
+
+.room-code-clear-button {
+  background: transparent;
+  border: 1px solid #555D83;
+  border-radius: 50%;
+  color: rgba(255, 255, 255, 0.7);
+  font-size: 20px;
+  font-weight: 500;
+  width: 30px;
+  height: 30px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: absolute;
+  top: 60px;
+  left: 400px;
+}
+
+.room-code-clear-button:hover {
+  background: rgba(255, 255, 255, 0.1);
+  color: white;
+  border-color: rgba(255, 255, 255, 0.5);
+  transform: rotate(180deg);
+}
+
+.room-code-submit-button {
+  background: linear-gradient(to bottom, rgba(69, 211, 255, 0.4) 0%, rgba(69, 211, 255, 0) 100%);
+  border: 2px solid #C9C9C9;
+  border-radius: 25px;
+  color: #45D3FF;
+  font-size: 18px;
+  font-weight: 600;
+  padding: 12px 30px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  backdrop-filter: blur(10px);
+  box-shadow: 0 0 6px rgba(69, 211, 255, 0.5), 0 0 12px rgba(69, 211, 255, 0.2);
+}
+
+.room-code-submit-button:hover {
+  transform: scale(1.05);
+  background: linear-gradient(to bottom, rgba(69, 211, 255, 0.5) 0%, rgba(69, 211, 255, 0) 100%);
+  box-shadow: 0 0 8px rgba(69, 211, 255, 0.6), 0 0 16px rgba(69, 211, 255, 0.3);
 } 
