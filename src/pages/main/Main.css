@@ -144,17 +144,20 @@
   }
 
   .profile-container {
-    top: 15px;
-    right: 15px;
-    padding: 6px 12px;
+    padding: 8px 18px;
   }
 
   .profile-image {
-    width: 25px;
-    height: 25px;
+    width: 42px;
+    height: 42px;
+  }
+
+  .profile-image img {
+    width: 36px;
+    height: 36px;
   }
 
   .profile-text {
-    font-size: 12px;
+    font-size: 15px;
   }
 } 
