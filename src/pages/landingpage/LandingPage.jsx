@@ -30,9 +30,7 @@ const LandingPage = () => {
   }, []);
 
   const handleLogin = () => {
-    // 임시로 alert 처리
-    alert('메인 페이지는 현재 개발 중입니다.');
-    // navigate('/main');
+    navigate('/main');
   };
 
   const handleDotClick = (index) => {
