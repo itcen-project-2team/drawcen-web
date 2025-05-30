@@ -25,7 +25,7 @@ const Canvas = ({ isQuizMaster, answer, timePercent }) => {
     const canvas = canvasRef.current;
     const { width, height } = canvas;
     ctx.save();
-    ctx.fillStyle = '#f0f8ff';
+    ctx.fillStyle = '#ffffff';
     ctx.fillRect(0, 0, width, height);
     ctx.strokeStyle = 'rgba(200, 215, 255, 0.2)';
     ctx.lineWidth = 0.5;
@@ -60,6 +60,28 @@ const Canvas = ({ isQuizMaster, answer, timePercent }) => {
     ctxRef.current.lineTo(offsetX, offsetY);
     ctxRef.current.stroke();
     setCurrentStroke(prev => [...prev, { x: offsetX, y: offsetY, color, lineWidth }]);
+  };
+
+  const handleMouseLeave = () => {
+    if (isDrawing && currentStroke.length > 1) {
+      // 현재 스트로크를 히스토리에 저장하고 패스 종료
+      setHistory(prev => [...prev, currentStroke]);
+      ctxRef.current.closePath();
+      setCurrentStroke([]);
+      // isDrawing은 true로 유지해서 다시 들어왔을 때 이어서 그릴 수 있도록
+    }
+  };
+
+  const handleMouseEnter = (e) => {
+    if (isDrawing) {
+      // 새로운 스트로크 시작
+      const { offsetX, offsetY } = e.nativeEvent;
+      ctxRef.current.beginPath();
+      ctxRef.current.moveTo(offsetX, offsetY);
+      ctxRef.current.strokeStyle = color;
+      ctxRef.current.lineWidth = lineWidth;
+      setCurrentStroke([{ x: offsetX, y: offsetY, color, lineWidth }]);
+    }
   };
 
   const stopDrawing = () => {
@@ -107,34 +129,70 @@ const Canvas = ({ isQuizMaster, answer, timePercent }) => {
 
   return (
     <div className={styles.canvasArea}>
+      {/* 캔버스 카드 배경 */}
+      <div className={styles.canvasCard}></div>
+      
+      {/* 상단 반투명 도구 모음 */}
+      <div className={styles.canvasToolbar}>
+        <div className={styles.toolGroup}>
+          <label className={styles.colorTool}>
+            <span>🎨</span>
+            <input 
+              type="color" 
+              value={color} 
+              onChange={e => setColor(e.target.value)}
+              className={styles.colorInput}
+            />
+          </label>
+          <label className={styles.brushTool}>
+            <span>✏️</span>
+            <input 
+              type="range" 
+              min="1" 
+              max="20" 
+              value={lineWidth} 
+              onChange={e => setLineWidth(Number(e.target.value))}
+              className={styles.rangeInput}
+            />
+            <span className={styles.lineWidthDisplay}>{lineWidth}px</span>
+          </label>
+        </div>
+        <div className={styles.actionGroup}>
+          <button 
+            onClick={handleUndo} 
+            disabled={history.length === 0}
+            className={styles.toolButton}
+          >
+            ↩️ 되돌리기
+          </button>
+          <button 
+            onClick={handleClear}
+            className={styles.toolButton}
+          >
+            🗑️ 지우기
+          </button>
+        </div>
+      </div>
+
       {isQuizMaster && (
         <div className={styles.answerBox}>
           정답: {answer}
         </div>
       )}
+      
       <div className={styles.canvasWrapper}>
         <canvas
           ref={canvasRef}
           onMouseDown={startDrawing}
           onMouseMove={draw}
           onMouseUp={stopDrawing}
-          onMouseLeave={stopDrawing}
+          onMouseEnter={handleMouseEnter}
+          onMouseLeave={handleMouseLeave}
         />
       </div>
+      
       <div className={styles.timeBarBg}>
         <div className={styles.timeBar} style={{ width: `${timePercent}%` }} />
-      </div>
-      <div className={styles.canvasTools}>
-        <label>
-          🎨
-          <input type="color" value={color} onChange={e => setColor(e.target.value)} />
-        </label>
-        <label>
-          ✏️
-          <input type="range" min="1" max="10" value={lineWidth} onChange={e => setLineWidth(Number(e.target.value))} />
-        </label>
-        <button onClick={handleUndo} disabled={history.length === 0}>↩️ 되돌리기</button>
-        <button onClick={handleClear}>🗑️ 지우기</button>
       </div>
     </div>
   );

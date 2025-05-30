@@ -1,7 +1,7 @@
 .playerList {
   width: 100%;
   height: 100%;
-  background: #fff;
+  background: #f0f8ff;
   border-radius: 16px;
   display: flex;
   flex-direction: column;
@@ -14,11 +14,25 @@
   align-items: center;
   flex: 1 1 0;
   min-height: 80px;
-  border-bottom: 1px solid #eee;
+  border-bottom: 1px solid #dde7ff;
   padding: 16px;
   gap: 16px;
-  background: #fff;
-  transition: background 0.2s;
+  background: transparent;
+  transition: all 0.3s ease;
+  position: relative;
+}
+.playerItem.drawing {
+  background: rgba(25, 118, 210, 0.1);
+  border-left: 4px solid #1976d2;
+  animation: drawingPulse 2s ease-in-out infinite;
+}
+@keyframes drawingPulse {
+  0%, 100% {
+    background: rgba(25, 118, 210, 0.1);
+  }
+  50% {
+    background: rgba(25, 118, 210, 0.2);
+  }
 }
 .playerItem:last-child {
   border-bottom: none;
@@ -46,6 +60,28 @@
   font-weight: bold;
   font-size: 1.1rem;
   color: #333;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.drawingIndicator {
+  font-size: 16px;
+  animation: pencilMove 1.5s ease-in-out infinite;
+  display: inline-block;
+}
+@keyframes pencilMove {
+  0%, 100% {
+    transform: translateX(0) rotate(0deg);
+  }
+  25% {
+    transform: translateX(3px) rotate(5deg);
+  }
+  50% {
+    transform: translateX(-2px) rotate(-3deg);
+  }
+  75% {
+    transform: translateX(2px) rotate(3deg);
+  }
 }
 .score {
   color: #1976d2;
