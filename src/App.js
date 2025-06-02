@@ -1,6 +1,6 @@
 import React from 'react';
 import AppRouter from './routes/AppRouter';
-import Background from './components/Background/Background';
+import Background from './components/background/Background';
 import './App.css';
 
 function App() {
