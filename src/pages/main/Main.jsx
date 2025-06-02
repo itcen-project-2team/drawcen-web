@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import './Main.css';
 import Modal from '../../components/modal/Modal';
-import Button from '../../components/Button/Button';
+import Button from '../../components/button/Button';
 import background from '../../assets/background.png';
 import logo from '../../assets/logo.png';
 import pink from '../../assets/pink.png';
