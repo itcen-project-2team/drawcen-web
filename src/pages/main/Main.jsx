@@ -2,11 +2,12 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import './Main.css';
 import Modal from '../../components/modal/Modal';
-import Button from '../../components/button/Button';
+import Button from '../../components/Button/Button';
 import background from '../../assets/background.png';
 import logo from '../../assets/logo.png';
 import pink from '../../assets/pink.png';
 import editIcon from '../../assets/edit-icon.png';
+import { kakaoLogin } from '../../services/userService';
 
 const Main = () => {
   const navigate = useNavigate();
@@ -26,6 +27,10 @@ const Main = () => {
 
   const handleProfileClick = () => {
     setIsProfileModalOpen(true);
+  };
+
+  const handleKakaoLogin = () => {
+    kakaoLogin();
   };
 
   const handleCloseModal = () => {
@@ -87,6 +92,9 @@ const Main = () => {
       <div className="main-content">
         <img src={logo} alt="DrawCen Logo" className="main-logo" />
         <div className="button-container">
+          <button className="game-button kakao-login" onClick={handleKakaoLogin}>
+            카카오 로그인
+          </button>
           <button className="game-button create-room" onClick={handleCreateRoom}>
             방 생성
           </button>

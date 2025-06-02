@@ -36,6 +36,7 @@ export const registerUser = async (userData) => {
 
 // 카카오 OAuth 로그인
 export const kakaoLogin = () => {
-  // 직접 브라우저를 리다이렉트
-  window.location.href = "http://localhost:8080/oauth2/authorization/kakao";
+  // 환경변수에서 baseURL을 가져와서 사용
+  const baseURL = process.env.REACT_APP_API_URL || '';
+  window.location.href = `${baseURL}/oauth2/authorization/kakao`;
 }; 

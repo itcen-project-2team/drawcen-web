@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { useParams } from "react-router-dom";
-import Background from "../../components/background/Background";
+import Background from "../../components/Background/Background.jsx";
 import PlayerList from "./PlayerList";
 import Canvas from "./Canvas";
 import ChatBox from "./ChatBox";
