@@ -8,6 +8,7 @@ import playGuide1 from '../../assets/playguide-01.png';
 import playGuide2 from '../../assets/playguide-02.png';
 import playGuide3 from '../../assets/playguide-03.png';
 import playGuide4 from '../../assets/playguide-04.png';
+import { kakaoLogin } from '../../services/userService';
 
 const LandingPage = () => {
   const navigate = useNavigate();
@@ -30,7 +31,7 @@ const LandingPage = () => {
   }, []);
 
   const handleLogin = () => {
-    navigate('/main');
+    kakaoLogin();
   };
 
   const handleDotClick = (index) => {
