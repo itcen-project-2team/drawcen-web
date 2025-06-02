@@ -1,62 +1,56 @@
 pipeline {
-  agent any
-
-  environment {
-    DOCKERHUB_CREDENTIALS = 'dockerhub-cred'
-    IMAGE_NAME = 'visionn7111/sketch-quiz-web'
-    SERVER_IP = "${env.WEB_IP}" // Jenkins 환경변수에서 EC2 IP 불러옴
-  }
-
-  stages {
-    stage('Clone') {
-      steps {
-        git url: 'https://github.com/itcen-project-2team/drawcen-web', branch: 'develop'
-      }
+    agent {
+        docker { image 'docker:24-dind' }
     }
 
-    stage('Generate .env.production') {
-      steps {
-        writeFile file: '.env.production', text: """
-VITE_BACKEND_URL=http://${env.SERVER_IP}:8080
-VITE_WS_BASE_URL=/ws/canvas
-"""
-      }
+    environment {
+        SERVER_IP = "${WEB_IP}"
+        IMAGE_NAME = 'visionn7111/sketch-quiz-web'
+        IMAGE_TAG = "${BUILD_NUMBER}"
+        ECR_REGISTRY = '010686621060.dkr.ecr.ap-northeast-2.amazonaws.com'
+        ECR_REPOSITORY = '2team/sketch-quiz-web'
+        AWS_REGION = 'ap-northeast-2'
     }
 
-    stage('Docker Build') {
-      steps {
-        sh 'docker build -t $IMAGE_NAME .'
-      }
-    }
-
-    stage('Push to Docker Hub') {
-      steps {
-        withCredentials([usernamePassword(
-          credentialsId: "${DOCKERHUB_CREDENTIALS}",
-          usernameVariable: 'DOCKER_USER',
-          passwordVariable: 'DOCKER_PASS'
-        )]) {
-          sh '''
-            echo $DOCKER_PASS | docker login -u $DOCKER_USER --password-stdin
-            docker push $IMAGE_NAME
-          '''
+    stages {
+        stage('Clone Source') {
+            steps {
+                git url: 'https://github.com/itcen-project-2team/sketch-quiz-web', branch: 'develop'
+            }
         }
-      }
-    }
 
-    stage('Deploy to Web Server') {
-      steps {
-        sshagent(credentials: ['webserver-ssh-key']) {
-          sh """
-            ssh -o StrictHostKeyChecking=no ubuntu@$SERVER_IP '
-              docker pull ${IMAGE_NAME} &&
-              docker stop nginx-web || true &&
-              docker rm nginx-web || true &&
-              docker run -d --name nginx-web -p 80:80 ${IMAGE_NAME}
-            '
-          """
+        stage('Login to ECR') {
+            steps {
+                withCredentials([usernamePassword(credentialsId: 'AWS_ECR_CREDENTIAL', usernameVariable: 'AWS_ACCESS_KEY_ID', passwordVariable: 'AWS_SECRET_ACCESS_KEY')]) {
+                    sh '''
+                        aws --region $AWS_REGION ecr get-login-password | docker login --username AWS --password-stdin $ECR_REGISTRY
+                    '''
+                }
+            }
         }
-      }
+
+        stage('Build & Push Docker Image') {
+            steps {
+                sh """
+                    docker build -t $ECR_REPOSITORY:$IMAGE_TAG .
+                    docker push $ECR_REPOSITORY:$IMAGE_TAG
+                """
+            }
+        }
+
+        stage('Deploy with docker-compose') {
+            steps {
+                sshagent(credentials: ['webserver-ssh-key']) {
+                    sh """
+                    scp -o StrictHostKeyChecking=no docker-compose.yml ubuntu@${SERVER_IP}:~/sketch-quiz-web/
+                    ssh -o StrictHostKeyChecking=no ubuntu@${SERVER_IP} '
+                        cd ~/sketch-quiz-web
+                        docker-compose down || true
+                        IMAGE_TAG=$IMAGE_TAG docker-compose up -d --build
+                    '
+                    """
+                }
+            }
+        }
     }
-  }
 }
