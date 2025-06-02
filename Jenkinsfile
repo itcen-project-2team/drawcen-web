@@ -2,17 +2,15 @@ pipeline {
   agent any
 
   environment {
-    ECR_REGISTRY = '010686621060.dkr.ecr.ap-northeast-2.amazonaws.com'
-    ECR_REPOSITORY = '2team/front-ecr'
-    IMAGE_TAG = "${env.BUILD_NUMBER}"
-    SERVER_IP = "${env.WEB_IP}"
-    AWS_REGION = 'ap-northeast-2'
+    DOCKERHUB_CREDENTIALS = 'dockerhub-cred'
+    IMAGE_NAME = 'visionn7111/sketch-quiz-web'
+    SERVER_IP = "${env.WEB_IP}" // Jenkins 환경변수에서 EC2 IP 불러옴
   }
 
   stages {
     stage('Clone') {
       steps {
-        git url: 'https://github.com/itcen-project-2team/drawcen-web', branch: 'develop'
+        git url: 'https://github.com/itcen-project-2team/drawcen-web', branch: 'main'
       }
     }
 
@@ -25,25 +23,24 @@ VITE_WS_BASE_URL=/ws/canvas
       }
     }
 
-    stage('Login to ECR') {
-      steps {
-        withCredentials([usernamePassword(credentialsId: 'AWS_ECR_CREDENTIAL', usernameVariable: 'AWS_ACCESS_KEY_ID', passwordVariable: 'AWS_SECRET_ACCESS_KEY')]) {
-          sh '''
-            aws --region $AWS_REGION ecr get-login-password | docker login --username AWS --password-stdin $ECR_REGISTRY
-          '''
-        }
-      }
-    }
-
     stage('Docker Build') {
       steps {
-        sh "docker build -t $ECR_REPOSITORY:$IMAGE_TAG ."
+        sh 'docker build -t $IMAGE_NAME .'
       }
     }
 
-    stage('Push to ECR') {
+    stage('Push to Docker Hub') {
       steps {
-        sh "docker push $ECR_REPOSITORY:$IMAGE_TAG"
+        withCredentials([usernamePassword(
+          credentialsId: "${DOCKERHUB_CREDENTIALS}",
+          usernameVariable: 'DOCKER_USER',
+          passwordVariable: 'DOCKER_PASS'
+        )]) {
+          sh '''
+            echo $DOCKER_PASS | docker login -u $DOCKER_USER --password-stdin
+            docker push $IMAGE_NAME
+          '''
+        }
       }
     }
 
@@ -52,10 +49,10 @@ VITE_WS_BASE_URL=/ws/canvas
         sshagent(credentials: ['webserver-ssh-key']) {
           sh """
             ssh -o StrictHostKeyChecking=no ubuntu@$SERVER_IP '
-              docker pull $ECR_REPOSITORY:$IMAGE_TAG &&
+              docker pull ${IMAGE_NAME} &&
               docker stop nginx-web || true &&
               docker rm nginx-web || true &&
-              docker run -d --name nginx-web -p 80:80 $ECR_REPOSITORY:$IMAGE_TAG
+              docker run -d --name nginx-web -p 80:80 ${IMAGE_NAME}
             '
           """
         }
