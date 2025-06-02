@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import './Main.css';
 import Modal from '../../components/modal/Modal';
@@ -7,13 +7,22 @@ import background from '../../assets/background.png';
 import logo from '../../assets/logo.png';
 import pink from '../../assets/pink.png';
 import editIcon from '../../assets/edit-icon.png';
+import useUserStore from '../../stores/userStore';
 
 const Main = () => {
   const navigate = useNavigate();
+  const { logout, user, isLoggedIn } = useUserStore();
   const [isProfileModalOpen, setIsProfileModalOpen] = useState(false);
   const [isNicknameModalOpen, setIsNicknameModalOpen] = useState(false);
   const [isRoomCodeModalOpen, setIsRoomCodeModalOpen] = useState(false);
   const [roomCode, setRoomCode] = useState(['', '', '', '', '', '']);
+
+  // 로그인 상태 확인 후 랜딩페이지로 리다이렉트
+  useEffect(() => {
+    if (!isLoggedIn) {
+      navigate('/');
+    }
+  }, [isLoggedIn, navigate]);
 
   const handleCreateRoom = () => {
     // TODO: 방 생성 로직 구현
@@ -78,11 +87,22 @@ const Main = () => {
     if (firstInput) firstInput.focus();
   };
 
+  // 로그아웃 처리
+  const handleLogout = () => {
+    logout();
+    navigate('/');
+  };
+
   return (
     <div className="main" style={{ backgroundImage: `url(${background})` }}>
+      {/* 로그아웃 버튼 */}
+      <button className="logout-button" onClick={handleLogout}>
+        로그아웃
+      </button>
+      
       <div className="profile-container" onClick={handleProfileClick}>
         <img src={pink} alt="Profile" className="profile-image" />
-        <span className="profile-text">채원쓰 채원쓰</span>
+        <span className="profile-text">{user?.nickname || user?.username || '사용자'}</span>
       </div>
       <div className="main-content">
         <img src={logo} alt="DrawCen Logo" className="main-logo" />
@@ -102,7 +122,7 @@ const Main = () => {
           <img src={pink} alt="Profile" className="modal-profile-image" />
           <div className="modal-profile-info">
             <img src={editIcon} alt="Edit" className="edit-icon" onClick={handleEditProfile} />
-            <span className="modal-profile-name">채원쓰</span>
+            <span className="modal-profile-name">{user.nickname}</span>
           </div>
         </div>
       </Modal>

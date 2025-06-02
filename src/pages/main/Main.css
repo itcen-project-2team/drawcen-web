@@ -12,6 +12,34 @@
   overflow: hidden;
 }
 
+/* 로그아웃 버튼 */
+.logout-button {
+  position: absolute;
+  top: 20px;
+  right: 20px;
+  padding: 8px 16px;
+  background: rgba(220, 53, 69, 0.3);
+  color: #dc3545;
+  border: 1px solid rgba(220, 53, 69, 0.5);
+  border-radius: 20px;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 500;
+  transition: all 0.2s ease;
+  backdrop-filter: blur(10px);
+  z-index: 1000;
+}
+
+.logout-button:hover {
+  background: rgba(220, 53, 69, 0.5);
+  transform: scale(1.05);
+  box-shadow: 0 0 10px rgba(220, 53, 69, 0.5);
+}
+
+.logout-button:active {
+  transform: scale(0.95);
+}
+
 .profile-container {
   position: absolute;
   top: 80px;
