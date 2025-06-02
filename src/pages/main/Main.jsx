@@ -1,6 +1,8 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import './Main.css';
+import Modal from '../../components/modal/Modal';
+import Button from '../../components/button/Button';
 import background from '../../assets/background.png';
 import logo from '../../assets/logo.png';
 import pink from '../../assets/pink.png';
@@ -95,73 +97,58 @@ const Main = () => {
       </div>
 
       {/* 프로필 모달 */}
-      {isProfileModalOpen && (
-        <div className="modal-overlay" onClick={handleCloseModal}>
-          <div className="modal-content" onClick={(e) => e.stopPropagation()}>
-            <button className="modal-close" onClick={handleCloseModal}>
-              ×
-            </button>
-            <div className="modal-profile">
-              <img src={pink} alt="Profile" className="modal-profile-image" />
-              <div className="modal-profile-info">
-                <img src={editIcon} alt="Edit" className="edit-icon" onClick={handleEditProfile} />
-                <span className="modal-profile-name">승준짱 승준짱</span>
-              </div>
-            </div>
+      <Modal isOpen={isProfileModalOpen} onClose={handleCloseModal}>
+        <div className="modal-profile">
+          <img src={pink} alt="Profile" className="modal-profile-image" />
+          <div className="modal-profile-info">
+            <img src={editIcon} alt="Edit" className="edit-icon" onClick={handleEditProfile} />
+            <span className="modal-profile-name">채원쓰</span>
           </div>
         </div>
-      )}
+      </Modal>
 
       {/* 닉네임 수정 모달 */}
-      {isNicknameModalOpen && (
-        <div className="modal-overlay" onClick={handleCloseModal}>
-          <div className="modal-content" onClick={(e) => e.stopPropagation()}>
-            <button className="modal-close" onClick={handleCloseModal}>
-              ×
-            </button>
-            <div className="nickname-modal">
-              <div className="nickname-top-buttons">
-                <button className="nickname-type-button">닉네임 생성</button>
-                <span className="current-nickname-text">승준짱 승준짱</span>
-              </div>
-              <button className="nickname-submit-button" onClick={handleNicknameChange}>
-                수정
-              </button>
-            </div>
+      <Modal isOpen={isNicknameModalOpen} onClose={handleCloseModal}>
+        <div className="nickname-modal">
+          <div className="nickname-top-buttons">
+            <Button variant="outline" size="medium" shape="square">닉네임 생성</Button>
+            <span className="current-nickname-text">승준짱 승준짱</span>
           </div>
+          <Button variant="secondary" size="medium" onClick={handleNicknameChange}>
+            수정
+          </Button>
         </div>
-      )}
+      </Modal>
 
       {/* 방 코드 입력 모달 */}
-      {isRoomCodeModalOpen && (
-        <div className="modal-overlay" onClick={handleCloseModal}>
-          <div className="modal-content" onClick={(e) => e.stopPropagation()}>
-            <button className="modal-close" onClick={handleCloseModal}>
-              ×
-            </button>
-            <button className="room-code-clear-button" onClick={handleClearRoomCode}>
-              ↺
-            </button>
-            <div className="room-code-modal">
-              <div className="room-code-input">
-                {roomCode.map((code, index) => (
-                  <input
-                    key={index}
-                    type="text"
-                    maxLength="1"
-                    data-index={index}
-                    value={code}
-                    onChange={(e) => handleRoomCodeChange(index, e.target.value)}
-                  />
-                ))}
-              </div>
-              <button className="room-code-submit-button" onClick={handleRoomEnter}>
-                입장
-              </button>
-            </div>
+      <Modal isOpen={isRoomCodeModalOpen} onClose={handleCloseModal}>
+        <Button 
+          variant="icon" 
+          shape="circle" 
+          size="medium" 
+          onClick={handleClearRoomCode}
+          className="room-code-clear-button"
+        >
+          ↺
+        </Button>
+        <div className="room-code-modal">
+          <div className="room-code-input">
+            {roomCode.map((code, index) => (
+              <input
+                key={index}
+                type="text"
+                maxLength="1"
+                data-index={index}
+                value={code}
+                onChange={(e) => handleRoomCodeChange(index, e.target.value)}
+              />
+            ))}
           </div>
+          <Button variant="secondary" size="medium" onClick={handleRoomEnter}>
+            입장
+          </Button>
         </div>
-      )}
+      </Modal>
     </div>
   );
 };

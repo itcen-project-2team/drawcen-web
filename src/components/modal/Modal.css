@@ -1,0 +1,119 @@
+/* 모달 공통 스타일 */
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.7);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 2000;
+}
+
+.modal-content {
+  background: rgba(27, 36, 110, 0.3);
+  border-radius: 20px;
+  padding: 50px 40px;
+  position: relative;
+  backdrop-filter: blur(15px);
+  border: 2px solid transparent;
+  background-clip: padding-box;
+  min-width: 400px;
+  min-height: 200px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 40px;
+}
+
+.modal-content::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  border-radius: 20px;
+  border: 2px solid transparent;
+  background: linear-gradient(180deg, #CF83FF, #45D3FF) border-box;
+  -webkit-mask: linear-gradient(#fff 0 0) padding-box, linear-gradient(#fff 0 0);
+  -webkit-mask-composite: destination-out;
+  mask-composite: exclude;
+  pointer-events: none;
+}
+
+.modal-content::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.3);
+  border-radius: 20px;
+  pointer-events: none;
+  z-index: -1;
+}
+
+.modal-close {
+  position: absolute;
+  top: 15px;
+  right: 15px;
+  background: none;
+  border: none;
+  color: white;
+  font-size: 24px;
+  cursor: pointer;
+  width: 30px;
+  height: 30px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  transition: background 0.2s ease;
+}
+
+.modal-close:hover {
+  background: rgba(255, 255, 255, 0.1);
+}
+
+/* 모달 크기 유틸리티 클래스 */
+.modal-small {
+  min-width: 300px;
+  min-height: 150px;
+}
+
+.modal-medium {
+  min-width: 500px;
+  min-height: 300px;
+}
+
+.modal-large {
+  min-width: 700px;
+  min-height: 500px;
+}
+
+.modal-wide {
+  min-width: 600px;
+  max-width: 80vw;
+  min-height: 200px;
+}
+
+.modal-tall {
+  min-width: 400px;
+  min-height: 600px;
+  max-height: 80vh;
+}
+
+/* 모달 패딩 유틸리티 클래스 */
+.modal-compact {
+  padding: 30px 25px;
+  gap: 20px;
+}
+
+.modal-spacious {
+  padding: 60px 50px;
+  gap: 50px;
+} 

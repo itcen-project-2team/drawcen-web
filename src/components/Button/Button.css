@@ -1,0 +1,131 @@
+/* 버튼 기본 스타일 */
+.btn {
+  border: none;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  backdrop-filter: blur(10px);
+  color: #45D3FF;
+}
+
+.btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* 버튼 변형 (Variants) */
+.btn-primary {
+  background: linear-gradient(to bottom, rgba(69, 211, 255, 0.4) 0%, rgba(69, 211, 255, 0) 100%);
+  border: 2px solid transparent;
+  background-clip: padding-box;
+  box-shadow: 0 0 6px rgba(69, 211, 255, 0.5), 0 0 12px rgba(69, 211, 255, 0.2);
+}
+
+.btn-primary::before {
+  content: '';
+  position: absolute;
+  top: -2px;
+  left: -2px;
+  right: -2px;
+  bottom: -2px;
+  border-radius: inherit;
+  border: 2px solid transparent;
+  background: linear-gradient(180deg, #CF83FF, #45D3FF) border-box;
+  -webkit-mask: linear-gradient(#fff 0 0) padding-box, linear-gradient(#fff 0 0);
+  -webkit-mask-composite: destination-out;
+  mask-composite: exclude;
+  pointer-events: none;
+}
+
+.btn-primary:hover {
+  transform: scale(1.05);
+  background: linear-gradient(to bottom, rgba(69, 211, 255, 0.5) 0%, rgba(69, 211, 255, 0) 100%);
+  box-shadow: 0 0 8px rgba(69, 211, 255, 0.6), 0 0 16px rgba(69, 211, 255, 0.3);
+}
+
+.btn-secondary {
+  background: linear-gradient(to bottom, rgba(69, 211, 255, 0.4) 0%, rgba(69, 211, 255, 0) 100%);
+  border: 2px solid #C9C9C9;
+  box-shadow: 0 0 6px rgba(69, 211, 255, 0.5), 0 0 12px rgba(69, 211, 255, 0.2);
+}
+
+.btn-secondary:hover {
+  transform: scale(1.05);
+  background: linear-gradient(to bottom, rgba(69, 211, 255, 0.5) 0%, rgba(69, 211, 255, 0) 100%);
+  box-shadow: 0 0 8px rgba(69, 211, 255, 0.6), 0 0 16px rgba(69, 211, 255, 0.3);
+}
+
+.btn-outline {
+  background: transparent;
+  border: 1px solid #555D83;
+  color: rgba(255, 255, 255, 0.7);
+}
+
+.btn-outline:hover {
+  background: rgba(69, 211, 255, 0.1);
+  transform: scale(1.02);
+  box-shadow: 0 0 15px rgba(69, 211, 255, 0.7);
+  color: #45D3FF;
+}
+
+.btn-icon {
+  background: transparent;
+  border: 1px solid #555D83;
+  color: rgba(255, 255, 255, 0.7);
+}
+
+.btn-icon:hover {
+  background: rgba(255, 255, 255, 0.1);
+  color: white;
+  border-color: rgba(255, 255, 255, 0.5);
+  transform: rotate(180deg);
+}
+
+/* 버튼 크기 */
+.btn-small {
+  font-size: 14px;
+  padding: 8px 20px;
+}
+
+.btn-medium {
+  font-size: 18px;
+  padding: 12px 30px;
+}
+
+.btn-large {
+  font-size: 26px;
+  padding: 15px 40px;
+}
+
+/* 버튼 모양 */
+.btn-rounded {
+  border-radius: 25px;
+}
+
+.btn-square {
+  border-radius: 10px;
+}
+
+.btn-circle {
+  border-radius: 50%;
+  width: 30px;
+  height: 30px;
+  padding: 0;
+}
+
+/* 특수 크기 조합 */
+.btn-small.btn-circle {
+  width: 24px;
+  height: 24px;
+  font-size: 16px;
+}
+
+.btn-large.btn-circle {
+  width: 40px;
+  height: 40px;
+  font-size: 24px;
+} 

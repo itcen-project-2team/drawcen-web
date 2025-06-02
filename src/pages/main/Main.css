@@ -87,11 +87,11 @@
 }
 
 .game-button {
-  width: 250px;
+  width: 220px;
   height: 65px;
   border: none;
   border-radius: 32px;
-  font-size: 26px;
+  font-size: 20px;
   font-weight: 700;
   color: #45D3FF;
   cursor: pointer;
@@ -136,7 +136,7 @@
   .game-button {
     width: 250px;
     height: 65px;
-    font-size: 26px;
+    font-size: 20px;
   }
 
   .button-container {
@@ -162,87 +162,7 @@
   }
 }
 
-/* 모달 스타일 */
-.modal-overlay {
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background: rgba(0, 0, 0, 0.7);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  z-index: 2000;
-}
-
-.modal-content {
-  background: rgba(27, 36, 110, 0.3); /* 0.8에서 0.5로 변경하여 더 투명하게 */
-  border-radius: 20px;
-  padding: 50px 40px;
-  position: relative;
-  backdrop-filter: blur(15px);
-  border: 2px solid transparent;
-  background-clip: padding-box;
-  min-width: 400px;
-  min-height: 200px;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 40px;
-}
-
-.modal-content::before {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  border-radius: 20px;
-  border: 2px solid transparent;
-  background: linear-gradient(180deg, #CF83FF, #45D3FF) border-box;
-  -webkit-mask: linear-gradient(#fff 0 0) padding-box, linear-gradient(#fff 0 0);
-  -webkit-mask-composite: destination-out;
-  mask-composite: exclude;
-  pointer-events: none;
-}
-
-.modal-content::after {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background: rgba(0, 0, 0, 0.4); /* 검정색 40% 투명도 */
-  border-radius: 20px;
-  pointer-events: none;
-  z-index: -1;
-}
-
-.modal-close {
-  position: absolute;
-  top: 15px;
-  right: 15px;
-  background: none;
-  border: none;
-  color: white;
-  font-size: 24px;
-  cursor: pointer;
-  width: 30px;
-  height: 30px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  border-radius: 50%;
-  transition: background 0.2s ease;
-}
-
-.modal-close:hover {
-  background: rgba(255, 255, 255, 0.1);
-}
-
+/* 프로필 모달 스타일 */
 .modal-profile {
   display: flex;
   flex-direction: column;
@@ -373,8 +293,8 @@
   flex-direction: column;
   align-items: center;
   gap: 40px;
-  margin-top: 50px;
   position: relative;
+  width: 100%;
 }
 
 .room-code-input {
@@ -402,30 +322,11 @@
   box-shadow: 0 0 8px rgba(69, 211, 255, 0.5);
 }
 
+/* 방 코드 모달 전용 되돌리기 버튼 위치 */
 .room-code-clear-button {
-  background: transparent;
-  border: 1px solid #555D83;
-  border-radius: 50%;
-  color: rgba(255, 255, 255, 0.7);
-  font-size: 20px;
-  font-weight: 500;
-  width: 30px;
-  height: 30px;
-  cursor: pointer;
-  transition: all 0.2s ease;
-  display: flex;
-  align-items: center;
-  justify-content: center;
   position: absolute;
-  top: 60px;
-  left: 400px;
-}
-
-.room-code-clear-button:hover {
-  background: rgba(255, 255, 255, 0.1);
-  color: white;
-  border-color: rgba(255, 255, 255, 0.5);
-  transform: rotate(180deg);
+  top: 30px;
+  right: -160px;
 }
 
 .room-code-submit-button {

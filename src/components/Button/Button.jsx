@@ -1,14 +1,33 @@
-import React from "react";
-import styles from "./Button.module.css";
+import React from 'react';
+import './Button.css';
 
-/* 버튼 컴포넌트 예시 */
-const Button = ({ children, onClick, type = "button", className = "", ...rest }) => {
+const Button = ({
+  children,
+  variant = 'primary', // 'primary', 'secondary', 'outline', 'icon'
+  size = 'medium', // 'small', 'medium', 'large'
+  shape = 'rounded', // 'rounded', 'circle'
+  onClick,
+  disabled = false,
+  className = '',
+  style = {},
+  ...props
+}) => {
+  const buttonClass = [
+    'btn',
+    `btn-${variant}`,
+    `btn-${size}`,
+    `btn-${shape}`,
+    disabled ? 'btn-disabled' : '',
+    className
+  ].filter(Boolean).join(' ');
+
   return (
     <button
-      type={type}
-      className={`${styles.button} ${className}`}
+      className={buttonClass}
+      style={style}
       onClick={onClick}
-      {...rest}
+      disabled={disabled}
+      {...props}
     >
       {children}
     </button>
