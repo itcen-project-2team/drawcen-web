@@ -8,9 +8,12 @@ import playGuide1 from '../../assets/playguide-01.png';
 import playGuide2 from '../../assets/playguide-02.png';
 import playGuide3 from '../../assets/playguide-03.png';
 import playGuide4 from '../../assets/playguide-04.png';
+import { kakaoLogin } from '../../services/userService';
+import useUserStore from '../../stores/userStore';
 
 const LandingPage = () => {
   const navigate = useNavigate();
+  const { setUser, isLoggedIn } = useUserStore();
   const [currentGuide, setCurrentGuide] = useState(0);
   
   const guideImages = [playGuide1, playGuide2, playGuide3, playGuide4];
@@ -21,6 +24,13 @@ const LandingPage = () => {
     "안녕하세요4444안녕하세요안녕하세요안녕하세요안녕하세요"
   ];
 
+  // 로그인 상태 확인 후 메인페이지로 리다이렉트
+  useEffect(() => {
+    if (isLoggedIn) {
+      navigate('/main');
+    }
+  }, [isLoggedIn, navigate]);
+
   useEffect(() => {
     const timer = setInterval(() => {
       setCurrentGuide((prev) => (prev + 1) % 4);
@@ -30,7 +40,21 @@ const LandingPage = () => {
   }, []);
 
   const handleLogin = () => {
-    navigate('/main');
+    kakaoLogin();
+  };
+
+  // 임시 로그인 전역 상태 생성
+  const handleTempLogin = () => {
+    const tempUser = {
+      id: 1,
+      username: 'kingdom000603@gmail.com',
+      nickname: '최강채원',
+      email: 'kingdom000603@gmail.com',
+      isLoggedIn: true
+    };
+    
+    setUser(tempUser);
+    console.log('임시 로그인 정보:', tempUser);
   };
 
   const handleDotClick = (index) => {
@@ -39,6 +63,11 @@ const LandingPage = () => {
 
   return (
     <div className="App" style={{ backgroundImage: `url(${background})` }}>
+      {/* 임시 로그인 버튼 */}
+      <button className="temp-login-button" onClick={handleTempLogin}>
+        임시 로그인 생성
+      </button>
+      
       <div className="content-wrapper">
         <img src={logo} alt="DrawCen Logo" className="logo" />
         <div className="main-container">

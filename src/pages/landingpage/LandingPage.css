@@ -13,6 +13,34 @@
   overflow-x: hidden;
 }
 
+/* 임시 로그인 버튼 */
+.temp-login-button {
+  position: absolute;
+  top: 20px;
+  right: 20px;
+  padding: 8px 16px;
+  background: rgba(138, 43, 226, 0.3);
+  color: #9C4CCC;
+  border: 1px solid rgba(138, 43, 226, 0.5);
+  border-radius: 20px;
+  cursor: pointer;
+  font-size: 12px;
+  font-weight: 500;
+  transition: all 0.2s ease;
+  backdrop-filter: blur(10px);
+  z-index: 1000;
+}
+
+.temp-login-button:hover {
+  background: rgba(138, 43, 226, 0.5);
+  transform: scale(1.05);
+  box-shadow: 0 0 10px rgba(138, 43, 226, 0.5);
+}
+
+.temp-login-button:active {
+  transform: scale(0.95);
+}
+
 .content-wrapper {
   width: 100%;
   min-height: 100vh;
