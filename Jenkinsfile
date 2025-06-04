@@ -14,7 +14,7 @@ pipeline {
 
         // AWS ECR
         AWS_ECR_CREDENTIAL_ID = 'AWS_ECR_CREDENTIAL'
-        AWS_ECR_URI = '010686621060.dkr.ecr.ap-northeast-2.amazonaws.com'
+        AWS_ECR_URI = '010686621060.dkr.ecr.ap-northeast-2.amazonaws.com/2team/front-ecr'
         AWS_ECR_IMAGE_NAME = '2team/front-ecr'
         AWS_REGION = 'ap-northeast-2'
 
