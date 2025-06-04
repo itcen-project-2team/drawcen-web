@@ -76,21 +76,6 @@ pipeline {
             steps {
                 sshagent(credentials: ['webserver-ssh-key']) {
                     sh """
-                    scp -o StrictHostKeyChecking=no docker-compose.yml ubuntu@${WEB_IP}:~/app/
-                    ssh -o StrictHostKeyChecking=no ubuntu@${WEB_IP} '
-                        cd ~/app
-                        docker-compose down || true
-                        IMAGE_TAG=${BUILD_NUMBER} docker-compose up -d --build
-                    '
-                    """
-                }
-            }
-        }
-
-        stage('Deploy to Web Server') {
-            steps {
-                sshagent(credentials: ['webserver-ssh-key']) {
-                    sh """
                     ssh -o StrictHostKeyChecking=no ubuntu@${WEB_IP} '
                         docker rm -f frontend || true
                         docker pull ${AWS_ECR_URI}:${BUILD_NUMBER}
