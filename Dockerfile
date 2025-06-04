@@ -1,18 +1,17 @@
-# 1단계: React 빌드
 FROM node:20 AS build
 
 WORKDIR /app
 
 COPY package*.json ./
-COPY .env .env
 COPY . .
 
-RUN npm install && npm run build
+ARG REACT_APP_API_URL
+ENV REACT_APP_API_URL=$REACT_APP_API_URL
 
-# 2단계: NGINX로 정적 파일 서빙
+RUN npm install
+RUN npm run build
+
 FROM nginx:stable-alpine
 
 COPY --from=build /app/build /usr/share/nginx/html
-
-# NGINX 설정 복사
 COPY nginx/default.conf /etc/nginx/conf.d/default.conf

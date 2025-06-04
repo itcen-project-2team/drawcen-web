@@ -1,61 +1,96 @@
 pipeline {
-  agent any
-
-  environment {
-    DOCKERHUB_CREDENTIALS = 'dockerhub-cred'
-    IMAGE_NAME = 'visionn7111/sketch-quiz-web'
-    SERVER_IP = "${env.WEB_IP}"   // Jenkins 환경변수에서 EC2 IP 불러옴
-  }
-
-  stages {
-    stage('Clone') {
-      steps {
-        git url: 'https://github.com/itcen-project-2team/drawcen-web', branch: 'develop'
-      }
-    }
-    stage('Generate .env.production') {
-      steps {
-        writeFile file: '.env.production', text: """
-VITE_BACKEND_URL=http://${env.SERVER_IP}:8080
-VITE_WS_BASE_URL=/ws/canvas
-"""
-      }
+    agent any
+    options {
+        timeout(time: 1, unit: 'HOURS')
     }
 
-    stage('Docker Build (ARM local)') {
-      steps {
-        sh 'docker build -t $IMAGE_NAME .'
-      }
+    environment {
+        TIME_ZONE = 'Asia/Seoul'
+
+        // GitHub
+        GIT_TARGET_BRANCH = 'develop'
+        GIT_REPOSITORY_URL = 'https://github.com/itcen-project-2team/sketch-quiz-web'
+        GIT_CREDENTIALS_ID = 'jenkins-credential'
+
+        // AWS ECR
+        AWS_ECR_CREDENTIAL_ID = 'AWS_ECR_CREDENTIAL'
+        AWS_ECR_URI = '010686621060.dkr.ecr.ap-northeast-2.amazonaws.com'
+        AWS_ECR_IMAGE_NAME = '2team/front-ecr'
+        AWS_REGION = 'ap-northeast-2'
+
+        // Deployment target
+        WEB_IP = "${WEB_IP}"  // Jenkins에 등록된 환경변수, 웹서버 공인 IP
     }
 
-    stage('Push to Docker Hub') {
-      steps {
-        withCredentials([usernamePassword(
-          credentialsId: "${DOCKERHUB_CREDENTIALS}",
-          usernameVariable: 'DOCKER_USER',
-          passwordVariable: 'DOCKER_PASS'
-        )]) {
-          sh '''
-            echo $DOCKER_PASS | docker login -u $DOCKER_USER --password-stdin
-            docker push $IMAGE_NAME
-          '''
+    stages {
+        stage('Init') {
+            steps {
+                deleteDir()
+            }
         }
-      }
+
+        stage('Clone Source') {
+            steps {
+                git branch: "${GIT_TARGET_BRANCH}",
+                    credentialsId: "${GIT_CREDENTIALS_ID}",
+                    url: "${GIT_REPOSITORY_URL}"
+            }
+        }
+
+        stage('Build Docker Image') {
+            steps {
+                sh """
+                docker build -t ${AWS_ECR_IMAGE_NAME}:${BUILD_NUMBER} .
+                """
+            }
+        }
+
+        stage('Login to ECR') {
+            steps {
+                withCredentials([[$class: 'AmazonWebServicesCredentialsBinding', credentialsId: "${AWS_ECR_CREDENTIAL_ID}"]]) {
+                    sh """
+                    aws ecr get-login-password --region ${AWS_REGION} | docker login --username AWS --password-stdin ${AWS_ECR_URI}
+                    """
+                }
+            }
+        }
+
+        stage('Push Docker Image to ECR') {
+            steps {
+                sh """
+                docker push ${AWS_ECR_IMAGE_NAME}:${BUILD_NUMBER}
+                """
+            }
+        }
+
+        stage('Deploy to Web Server') {
+            steps {
+                sshagent(credentials: ['webserver-ssh-key']) {
+                    sh """
+                    scp -o StrictHostKeyChecking=no docker-compose.yml ubuntu@${WEB_IP}:~/app/
+                    ssh -o StrictHostKeyChecking=no ubuntu@${WEB_IP} '
+                        cd ~/app
+                        docker-compose down || true
+                        IMAGE_TAG=${BUILD_NUMBER} docker-compose up -d --build
+                    '
+                    """
+                }
+            }
+        }
+
+        stage('Cleanup') {
+            steps {
+                sh "docker image prune -f --all"
+            }
+        }
     }
 
-    stage('Deploy to Web Server') {
-      steps {
-        sshagent(credentials: ['webserver-ssh-key']) {
-          sh """
-            ssh -o StrictHostKeyChecking=no ubuntu@$SERVER_IP '
-              docker pull ${IMAGE_NAME} &&
-              docker stop nginx-web || true &&
-              docker rm nginx-web || true &&
-              docker run -d --name nginx-web -p 80:80 ${IMAGE_NAME}
-            '
-          """
+    post {
+        success {
+            echo 'Pipeline succeeded'
         }
-      }
+        failure {
+            echo 'Pipeline failed'
+        }
     }
-  }
 }
