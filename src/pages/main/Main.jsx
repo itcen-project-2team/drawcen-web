@@ -8,21 +8,39 @@ import logo from '../../assets/logo.png';
 import pink from '../../assets/pink.png';
 import editIcon from '../../assets/edit-icon.png';
 import useUserStore from '../../stores/userStore';
+import { checkLogIn, logout  } from '../../services/userService';
 
 const Main = () => {
   const navigate = useNavigate();
-  const { logout, user, isLoggedIn } = useUserStore();
+  const { deleteUser, user, isLoggedIn, setUser } = useUserStore();
   const [isProfileModalOpen, setIsProfileModalOpen] = useState(false);
   const [isNicknameModalOpen, setIsNicknameModalOpen] = useState(false);
   const [isRoomCodeModalOpen, setIsRoomCodeModalOpen] = useState(false);
   const [roomCode, setRoomCode] = useState(['', '', '', '', '', '']);
+  const [isCheckingLogin, setIsCheckingLogin] = useState(true);
 
-  // 로그인 상태 확인 후 랜딩페이지로 리다이렉트
+  // 페이지 로드 시 로그인 상태 체크
   useEffect(() => {
-    if (!isLoggedIn) {
-      navigate('/');
-    }
-  }, [isLoggedIn, navigate]);
+    const checkLoginStatus = async () => {
+      setIsCheckingLogin(true);
+      try {
+        const userData = await checkLogIn();
+        if (userData) {
+          // 로그인된 상태 - 서버에서 { email: "user@example.com" } 형태로 응답
+          setUser(userData);
+        } else {
+          navigate('/');
+        }
+      } catch (error) {
+        console.error('Main - 로그인 상태 확인 실패:', error);
+        navigate('/');
+      } finally {
+        setIsCheckingLogin(false);
+      }
+    };
+
+    checkLoginStatus();
+  }, [setUser, navigate]);
 
   const handleCreateRoom = () => {
     // TODO: 방 생성 로직 구현
@@ -88,10 +106,36 @@ const Main = () => {
   };
 
   // 로그아웃 처리
-  const handleLogout = () => {
-    logout();
-    navigate('/');
+  const handleLogout = async () => {
+    try {
+      // 1. 서버에 로그아웃 요청
+      await logout();
+      console.log('서버 로그아웃 완료');
+      
+      // 2. 전역 상태 초기화
+      deleteUser();
+      console.log('전역 상태 초기화 완료');
+      
+      // 3. 랜딩페이지로 이동
+      navigate('/');
+    } catch (error) {
+      console.error('로그아웃 처리 중 오류:', error);
+      // 에러가 발생해도 전역 상태는 초기화하고 로그인 페이지로 이동
+      deleteUser();
+      navigate('/');
+    }
   };
+
+  // 로그인 상태 체크 중이면 로딩 표시
+  if (isCheckingLogin) {
+    return (
+      <div className="main" style={{ backgroundImage: `url(${background})` }}>
+        <div style={{ color: 'white', fontSize: '18px', textAlign: 'center', marginTop: '50vh' }}>
+          로그인 상태 확인 중...
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="main" style={{ backgroundImage: `url(${background})` }}>
@@ -102,7 +146,7 @@ const Main = () => {
       
       <div className="profile-container" onClick={handleProfileClick}>
         <img src={pink} alt="Profile" className="profile-image" />
-        <span className="profile-text">{user?.nickname || user?.username || '사용자'}</span>
+        <span className="profile-text">{user.id || '사용자'}</span>
       </div>
       <div className="main-content">
         <img src={logo} alt="DrawCen Logo" className="main-logo" />
@@ -122,7 +166,7 @@ const Main = () => {
           <img src={pink} alt="Profile" className="modal-profile-image" />
           <div className="modal-profile-info">
             <img src={editIcon} alt="Edit" className="edit-icon" onClick={handleEditProfile} />
-            <span className="modal-profile-name">{user.nickname}</span>
+            <span className="modal-profile-name">{user.id}</span>
           </div>
         </div>
       </Modal>
