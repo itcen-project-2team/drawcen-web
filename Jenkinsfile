@@ -48,14 +48,21 @@ pipeline {
         stage('Login to ECR') {
             steps {
                 withCredentials([[$class: 'AmazonWebServicesCredentialsBinding', credentialsId: AWS_ECR_CREDENTIAL_ID]]) {
-                    sh '''
-                    set -eux
-                    aws ecr get-login-password --region $AWS_REGION | docker login --username AWS --password-stdin $AWS_ECR_URI
-                    '''
+                    script {
+                        def status = sh(
+                            script: '''
+                                set -eux
+                                aws ecr get-login-password --region $AWS_REGION | docker login --username AWS --password-stdin $AWS_ECR_URI
+                            ''',
+                            returnStatus: true
+                        )
+                        if (status != 0) {
+                            error "ECR 로그인 실패, 상태 코드: ${status}"
+                        }
+                    }
                 }
             }
         }
-    
 
         stage('Push Docker Image to ECR') {
             steps {
