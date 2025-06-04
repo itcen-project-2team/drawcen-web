@@ -7,16 +7,12 @@ const api = axios.create({
   headers: {
     "Content-Type": "application/json",
   },
+  withCredentials: true,
 });
 
 // 요청 인터셉터
 api.interceptors.request.use(
   (config) => {
-    // 예: 토큰 자동 첨부
-    const token = localStorage.getItem("token");
-    if (token) {
-      config.headers["Authorization"] = `Bearer ${token}`;
-    }
     return config;
   },
   (error) => Promise.reject(error)
