@@ -67,7 +67,7 @@ pipeline {
         stage('Push Docker Image to ECR') {
             steps {
                 sh """
-                docker push ${AWS_ECR_IMAGE_NAME}:${BUILD_NUMBER}
+                docker push ${AWS_ECR_URI}:${BUILD_NUMBER}
                 """
             }
         }
