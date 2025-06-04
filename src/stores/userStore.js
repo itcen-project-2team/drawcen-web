@@ -24,14 +24,14 @@ const saveUserToStorage = (user, isLoggedIn) => {
 const initialState = loadUserFromStorage();
 
 const useUserStore = create((set) => ({
-  user: initialState.user, // { id: "user_id" } 형태
+  user: initialState.user, // { id, nickname, email } 형태
   isLoggedIn: initialState.isLoggedIn, // 로그인 여부
 
   // 유저 정보 설정 (로그인 시)
   setUser: (userData) => {
     console.log('setUser 호출됨, 받은 데이터:', userData);
-    const user = { id: userData.email }; // 서버에서 받은 데이터를 id만 추출
-    console.log('변환된 user 객체:', user);
+    const user = userData; // 서버에서 받은 전체 데이터 저장 (id, nickname, email)
+    console.log('저장할 user 객체:', user);
     set({ user, isLoggedIn: true });
     saveUserToStorage(user, true);
     console.log('localStorage에 저장 완료');

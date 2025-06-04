@@ -146,7 +146,7 @@ const Main = () => {
       
       <div className="profile-container" onClick={handleProfileClick}>
         <img src={pink} alt="Profile" className="profile-image" />
-        <span className="profile-text">{user.id || '사용자'}</span>
+        <span className="profile-text">{user.nickname || user.id || '사용자'}</span>
       </div>
       <div className="main-content">
         <img src={logo} alt="DrawCen Logo" className="main-logo" />
@@ -166,7 +166,7 @@ const Main = () => {
           <img src={pink} alt="Profile" className="modal-profile-image" />
           <div className="modal-profile-info">
             <img src={editIcon} alt="Edit" className="edit-icon" onClick={handleEditProfile} />
-            <span className="modal-profile-name">{user.id}</span>
+            <span className="modal-profile-name">{user.nickname || user.id || '사용자'}</span>
           </div>
         </div>
       </Modal>

@@ -8,14 +8,11 @@ import playGuide1 from '../../assets/playguide-01.png';
 import playGuide2 from '../../assets/playguide-02.png';
 import playGuide3 from '../../assets/playguide-03.png';
 import playGuide4 from '../../assets/playguide-04.png';
-import { kakaoLogin, checkLogIn } from '../../services/userService';
-import useUserStore from '../../stores/userStore';
+import { kakaoLogin } from '../../services/userService';
 
 const LandingPage = () => {
   const navigate = useNavigate();
-  const { setUser, isLoggedIn } = useUserStore();
   const [currentGuide, setCurrentGuide] = useState(0);
-  const [isCheckingLogin, setIsCheckingLogin] = useState(true);
   
   const guideImages = [playGuide1, playGuide2, playGuide3, playGuide4];
   const guideTexts = [
@@ -25,36 +22,35 @@ const LandingPage = () => {
     "안녕하세요4444안녕하세요안녕하세요안녕하세요안녕하세요"
   ];
 
-  // 페이지 로드 시 로그인 상태 체크
+  // 쿠키에서 access_token 확인하는 함수
+  const getAccessTokenFromCookie = () => {
+    const cookies = document.cookie.split(';');
+    for (let cookie of cookies) {
+      const [name, value] = cookie.trim().split('=');
+      if (name === 'access_token') {
+        return value;
+      }
+    }
+    return null;
+  };
+
+  // 로그인 상태 확인 (쿠키 기반, API 요청 없음)
   useEffect(() => {
-    const checkLoginStatus = async () => {
-      setIsCheckingLogin(true);
-      try {
-        const userData = await checkLogIn();
-        console.log('checkLogIn 응답:', userData);
-        if (userData) {
-          // 로그인된 상태 - 서버에서 { email: "user@example.com" } 형태로 응답
-          console.log('로그인 상태 확인됨, setUser 호출:', userData);
-          setUser(userData);
-        } else {
-          console.log('로그인 상태 아님');
-        }
-      } catch (error) {
-        console.error('로그인 상태 확인 실패:', error);
-      } finally {
-        setIsCheckingLogin(false);
+    const checkLoginStatus = () => {
+      const accessToken = getAccessTokenFromCookie();
+      
+      if (accessToken) {
+        console.log('access_token 쿠키 발견, 로그인 성공으로 간주');
+        console.log('메인페이지로 이동합니다.');
+        navigate('/main');
+      } else {
+        console.log('access_token 쿠키 없음, 랜딩페이지 유지');
       }
     };
 
+    // 페이지 로드 시 즉시 확인 (API 요청 없이 쿠키만 확인)
     checkLoginStatus();
-  }, [setUser]);
-
-  // 로그인 상태 확인 후 메인페이지로 리다이렉트
-  useEffect(() => {
-    if (!isCheckingLogin && isLoggedIn) {
-      navigate('/main');
-    }
-  }, [isLoggedIn, isCheckingLogin, navigate]);
+  }, [navigate]);
 
   useEffect(() => {
     const timer = setInterval(() => {
@@ -67,19 +63,6 @@ const LandingPage = () => {
   const handleLogin = () => {
     kakaoLogin();
   };
-
-  // 로그인 상태 체크 중이면 로딩 표시
-  if (isCheckingLogin) {
-    return (
-      <div className="App" style={{ backgroundImage: `url(${background})` }}>
-        <div className="content-wrapper">
-          <div style={{ color: 'white', fontSize: '18px', textAlign: 'center' }}>
-            로그인 상태 확인 중...
-          </div>
-        </div>
-      </div>
-    );
-  }
 
   const handleDotClick = (index) => {
     setCurrentGuide(index);
