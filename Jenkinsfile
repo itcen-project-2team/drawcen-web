@@ -87,6 +87,22 @@ pipeline {
             }
         }
 
+        stage('Deploy to Web Server') {
+            steps {
+                sshagent(credentials: ['webserver-ssh-key']) {
+                    sh """
+                    ssh -o StrictHostKeyChecking=no ubuntu@${WEB_IP} '
+                        docker rm -f frontend || true
+                        docker pull ${AWS_ECR_URI}:${BUILD_NUMBER}
+                        docker run -d --name frontend -p 80:80 ${AWS_ECR_URI}:${BUILD_NUMBER}
+                    '
+                    """
+                }
+            }
+        }
+
+        
+
         stage('Cleanup') {
             steps {
                 sh "docker image prune -f --all"
