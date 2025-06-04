@@ -40,7 +40,7 @@ pipeline {
         stage('Build Docker Image') {
             steps {
                 sh """
-                docker build -t ${AWS_ECR_IMAGE_NAME}:${BUILD_NUMBER} .
+                docker build -t ${AWS_ECR_URI}:${BUILD_NUMBER} .
                 """
             }
         }
