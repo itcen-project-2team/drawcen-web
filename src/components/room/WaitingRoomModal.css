@@ -2,9 +2,9 @@
   padding: 30px;
   max-width: 500px;
   width: 90vw;
-  background: white;
+  background: transparent;
   border-radius: 15px;
-  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+  box-shadow: none;
 }
 
 .waiting-room-header {
@@ -13,7 +13,7 @@
 }
 
 .waiting-room-header h2 {
-  color: #333;
+  color: white;
   margin-bottom: 15px;
   font-size: 24px;
   font-weight: bold;
@@ -23,44 +23,60 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 10px;
-  background: #f8f9fa;
-  padding: 15px;
-  border-radius: 10px;
-  border: 2px dashed #dee2e6;
+  gap: 0;
+  background: transparent;
+  padding: 0;
+  border-radius: 0;
+  border: none;
 }
 
 .room-code-label {
-  font-weight: 600;
-  color: #666;
+  display: none;
 }
 
 .room-code-display {
   display: flex;
-  align-items: center;
-  gap: 8px;
+  background: rgba(255, 255, 255, 0);
+  border-radius: 10px;
+  border: 1px solid #555D83;
 }
 
 .room-code {
-  font-size: 24px;
-  font-weight: bold;
-  color: #007bff;
+  font-size: 18px;
+  font-weight: 500;
+  color: #ffffff;
   font-family: 'Courier New', monospace;
-  letter-spacing: 2px;
+  letter-spacing: 1px;
+  background: transparent;
+  padding: 10px 30px;
+  border: none;
+  border-radius: 10px 0 0 10px;
+  transition: all 0.2s ease;
 }
 
 .copy-button {
-  background: none;
+  background: transparent;
   border: none;
+  border-left: 1px solid #555D83;
+  border-radius: 0 10px 10px 0;
+  color: #45D3FF;
   font-size: 18px;
+  font-weight: 600;
   cursor: pointer;
-  padding: 5px;
-  border-radius: 5px;
-  transition: background-color 0.2s;
+  padding: 10px 30px;
+  transition: all 0.2s ease;
+  backdrop-filter: blur(10px);
+  box-shadow: 0 0 10px rgba(69, 211, 255, 0.5);
 }
 
 .copy-button:hover {
-  background-color: #e9ecef;
+  background: rgba(69, 211, 255, 0.1);
+  transform: scale(1.02);
+  box-shadow: 0 0 15px rgba(69, 211, 255, 0.7);
+}
+
+.copy-button::before {
+  content: '방 코드 복사';
 }
 
 .participants-section {
@@ -68,31 +84,35 @@
 }
 
 .participants-section h3 {
-  color: #333;
+  color: white;
   margin-bottom: 15px;
   font-size: 18px;
   font-weight: 600;
 }
 
 .participants-list {
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-  max-height: 200px;
-  overflow-y: auto;
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  grid-template-rows: repeat(2, 1fr);
+  gap: 15px;
+  max-height: none;
+  overflow-y: visible;
   padding: 10px;
-  background: #f8f9fa;
+  background: transparent;
   border-radius: 10px;
 }
 
 .participant-item {
   display: flex;
+  flex-direction: column;
   align-items: center;
-  gap: 12px;
-  padding: 10px 15px;
-  background: white;
+  gap: 8px;
+  padding: 15px 10px;
+  background: transparent;
   border-radius: 8px;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  box-shadow: none;
+  min-height: 80px;
+  justify-content: center;
 }
 
 .participant-avatar {
@@ -109,7 +129,7 @@
 
 .participant-name {
   font-weight: 500;
-  color: #333;
+  color: white;
   flex: 1;
 }
 
@@ -122,11 +142,30 @@
 .waiting-room-actions button {
   flex: 1;
   max-width: 150px;
+  background: linear-gradient(to bottom, rgba(69, 211, 255, 0.4) 0%, rgba(69, 211, 255, 0) 100%);
+  border: 2px solid #C9C9C9;
+  border-radius: 25px;
+  color: #45D3FF;
+  font-size: 18px;
+  font-weight: 600;
+  padding: 12px 30px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  backdrop-filter: blur(10px);
+  position: relative;
+  background-clip: padding-box;
+  box-shadow: 0 0 6px rgba(69, 211, 255, 0.5), 0 0 12px rgba(69, 211, 255, 0.2);
+}
+
+.waiting-room-actions button:hover {
+  transform: scale(1.05);
+  background: linear-gradient(to bottom, rgba(69, 211, 255, 0.5) 0%, rgba(69, 211, 255, 0) 100%);
+  box-shadow: 0 0 8px rgba(69, 211, 255, 0.6), 0 0 16px rgba(69, 211, 255, 0.3);
 }
 
 .waiting-message {
   text-align: center;
-  color: #666;
+  color: white;
   font-size: 14px;
   margin-top: 15px;
   padding: 10px;

@@ -52,13 +52,12 @@ const WaitingRoomModal = ({
     <Modal isOpen={isOpen} onClose={handleLeaveRoom}>
       <div className="waiting-room-modal">
         <div className="waiting-room-header">
-          <h2>게임 대기실</h2>
+          <h2>기다리는중...</h2>
           <div className="room-code-section">
             <span className="room-code-label">방 코드:</span>
             <div className="room-code-display">
               <span className="room-code">{roomCode}</span>
               <button className="copy-button" onClick={copyRoomCode}>
-                📋
               </button>
             </div>
           </div>
@@ -67,48 +66,47 @@ const WaitingRoomModal = ({
         <div className="participants-section">
           <h3>참가자 ({participants.length}명)</h3>
           <div className="participants-list">
-            {participants.map((participant, index) => (
-              <div key={participant.memberId || index} className="participant-item">
-                <div className="participant-avatar">👤</div>
-                <span className="participant-name">
-                  {participant.memberName || participant.nickname || participant.name || `참가자 ${index + 1}`}
-                  {participant.host && ' 👑'}
-                </span>
-              </div>
-            ))}
+            {Array.from({ length: 6 }, (_, index) => {
+              const participant = participants[index];
+              return (
+                <div key={index} className="participant-item">
+                  <div className="participant-avatar">
+                    {participant ? '👤' : ''}
+                  </div>
+                  <span className="participant-name">
+                    {participant ? 
+                      `${participant.memberName || participant.nickname || participant.name || `참가자 ${index + 1}`}${participant.host ? ' 👑' : ''}` 
+                      : ''
+                    }
+                  </span>
+                </div>
+              );
+            })}
           </div>
         </div>
 
         <div className="waiting-room-actions">
-          <Button 
-            variant="secondary" 
-            size="large" 
+          <button 
+            className="leave-button"
             onClick={handleLeaveRoom}
             disabled={isGameStarting}
           >
             떠나기
-          </Button>
+          </button>
           {isHost && (
-            <Button 
-              variant="primary" 
-              size="large" 
+            <button 
+              className="start-game-button"
               onClick={handleStartGame}
               disabled={participants.length < 2 || isGameStarting}
             >
               {isGameStarting ? '게임 시작 중...' : '게임 시작'}
-            </Button>
+            </button>
           )}
         </div>
 
         {isHost && participants.length < 2 && (
           <div className="waiting-message">
             게임을 시작하려면 최소 2명의 참가자가 필요합니다.
-          </div>
-        )}
-
-        {!isHost && (
-          <div className="waiting-message">
-            방장이 게임을 시작할 때까지 기다려주세요.
           </div>
         )}
       </div>
