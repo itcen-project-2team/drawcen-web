@@ -78,9 +78,19 @@ const Main = () => {
           }
           
           if (message.type === 'GAME_STARTED') {
-            console.log('게임 시작!');
+            console.log('게임 시작! gameId:', message.gameId, 'roomId:', message.roomId);
+            console.log('게임 참가자:', message.gameParticipants);
             setIsWaitingRoomOpen(false);
-            navigate(`/game/${message.gameId}`);
+            // 게임 페이지로 이동 (게임 데이터 전달)
+            navigate(`/game/${message.gameId}`, {
+              state: {
+                gameData: {
+                  gameId: message.gameId,
+                  roomCode: message.roomCode,
+                  gameParticipants: message.gameParticipants
+                }
+              }
+            });
           }
         });
         
@@ -123,10 +133,19 @@ const Main = () => {
         }
         
         if (message.type === 'GAME_STARTED') {
-          console.log('게임 시작!');
+          console.log('게임 시작! gameId:', message.gameId, 'roomId:', message.roomId);
+          console.log('게임 참가자:', message.gameParticipants);
           setIsWaitingRoomOpen(false);
-          // TODO: 게임 페이지로 이동
-          navigate(`/game/${message.gameId}`);
+          // 게임 페이지로 이동 (게임 데이터 전달)
+          navigate(`/game/${message.gameId}`, {
+            state: {
+              gameData: {
+                gameId: message.gameId,
+                roomCode: message.roomCode,
+                gameParticipants: message.gameParticipants
+              }
+            }
+          });
         }
       });
       
@@ -263,10 +282,19 @@ const Main = () => {
         }
         
         if (message.type === 'GAME_STARTED') {
-          console.log('게임 시작!');
+          console.log('게임 시작! gameId:', message.gameId, 'roomId:', message.roomId);
+          console.log('게임 참가자:', message.gameParticipants);
           setIsWaitingRoomOpen(false);
-          // TODO: 게임 페이지로 이동
-          navigate(`/game/${message.gameId}`);
+          // 게임 페이지로 이동 (게임 데이터 전달)
+          navigate(`/game/${message.gameId}`, {
+            state: {
+              gameData: {
+                gameId: message.gameId,
+                roomCode: message.roomCode,
+                gameParticipants: message.gameParticipants
+              }
+            }
+          });
         }
       });
       

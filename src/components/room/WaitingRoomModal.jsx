@@ -93,16 +93,16 @@ const WaitingRoomModal = ({
               variant="primary" 
               size="large" 
               onClick={handleStartGame}
-              disabled={participants.length < 1 || isGameStarting}
+              disabled={participants.length < 2 || isGameStarting}
             >
               {isGameStarting ? '게임 시작 중...' : '게임 시작'}
             </Button>
           )}
         </div>
 
-        {isHost && participants.length < 1 && (
+        {isHost && participants.length < 2 && (
           <div className="waiting-message">
-            게임을 시작하려면 최소 1명의 참가자가 필요합니다.
+            게임을 시작하려면 최소 2명의 참가자가 필요합니다.
           </div>
         )}
 

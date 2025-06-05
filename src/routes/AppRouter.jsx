@@ -8,6 +8,7 @@ const AppRouter = () => (
   <BrowserRouter>
     <Routes>
       <Route path="/room/:roomCode" element={<GameRoom/>} />
+      <Route path="/game/:gameId" element={<GameRoom/>} />
       <Route path="/main" element={<Main />} />
       <Route path="/" element={<LandingPage />} />
       {/* 다른 라우트도 여기에 추가 */}

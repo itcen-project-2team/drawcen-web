@@ -1,5 +1,5 @@
-import React, { useState, useEffect } from "react";
-import { useParams } from "react-router-dom";
+import React, { useState, useEffect, useCallback } from "react";
+import { useParams, useLocation } from "react-router-dom";
 import Background from "../../components/background/Background";
 import PlayerList from "./PlayerList";
 import Canvas from "./Canvas";
@@ -7,13 +7,14 @@ import ChatBox from "./ChatBox";
 import styles from "./GameRoom.module.css";
 import logo from "../../assets/logo.png";
 import avatar from "../../assets/default-avatar.png";
+import webSocketService from "../../utils/websocket";
 
 const GameRoom = () => {
-  const { roomCode } = useParams();
-  const [players, setPlayers] = useState([
-    { id: 1, nickname: "승준짱", score: -50, avatar: avatar, isDrawing: true },
-    { id: 2, nickname: "채원짱", score: 100, avatar: avatar, isDrawing: false },
-  ]);
+  const { roomCode, gameId } = useParams();
+  const location = useLocation();
+  
+  const [players, setPlayers] = useState([]);
+  const [currentRoomCode, setCurrentRoomCode] = useState(null);
   const [messages] = useState([
     { id: 1, nickname: "승준짱", message: "안녕하세요!" },
     { id: 2, nickname: "채원짱", message: "반가워요!" },
@@ -31,8 +32,19 @@ const GameRoom = () => {
   // 실시간 타이머 계산
   const [timePercent, setTimePercent] = useState(100);
 
+  // 게임 참가자 데이터 변환 함수
+  const convertGameParticipants = useCallback((gameParticipants) => {
+    return gameParticipants.map(participant => ({
+      id: participant.memberId,
+      nickname: participant.nickName,
+      score: participant.score,
+      avatar: avatar,
+      isDrawing: false // 초기값, 턴 정보에 따라 업데이트
+    }));
+  }, []);
+
   // 백엔드에서 턴 정보를 받는 예시 함수
-  const handleTurnUpdate = (turnData) => {
+  const handleTurnUpdate = useCallback((turnData) => {
     // 백엔드에서 받는 데이터 예시:
     // {
     //   startTime: "2024-01-15T14:30:00+09:00", // 서울 시간
@@ -46,7 +58,50 @@ const GameRoom = () => {
       ...player,
       isDrawing: player.id === turnData.currentDrawerId
     })));
-  };
+  }, []);
+
+  // 컴포넌트 마운트 시 파라미터 출력
+  useEffect(() => {
+    console.log('GameRoom 파라미터:', { roomCode, gameId });
+    console.log('GameRoom location.state:', location.state);
+  }, [roomCode, gameId, location.state]);
+
+  // 게임 데이터 로드 및 WebSocket 구독
+  useEffect(() => {
+    if (!gameId) return;
+
+    const setupGame = async () => {
+      try {
+        // 게임 시작 응답에서 전달된 데이터가 있는지 확인
+        if (location.state && location.state.gameData) {
+          const gameData = location.state.gameData;
+          console.log('게임 시작 데이터 사용:', gameData);
+          
+          setCurrentRoomCode(gameData.roomCode);
+          setPlayers(convertGameParticipants(gameData.gameParticipants));
+        }
+
+        // WebSocket 연결 (이미 연결되어 있을 수도 있음)
+        if (!webSocketService.isConnected) {
+          await webSocketService.connect();
+        }
+
+        // 게임 구독
+        webSocketService.subscribeToGame(gameId);
+
+        console.log('게임 구독 설정 완료:', gameId);
+      } catch (error) {
+        console.error('게임 설정 중 오류:', error);
+      }
+    };
+
+    setupGame();
+
+    // 컴포넌트 언마운트 시 정리
+    return () => {
+      // 필요시 게임 구독 해제
+    };
+  }, [gameId, convertGameParticipants, location.state]);
 
   // 실시간 타이머 업데이트
   useEffect(() => {
@@ -90,21 +145,6 @@ const GameRoom = () => {
     return () => clearInterval(interval);
   }, [turnInfo.startTime, turnInfo.endTime]);
 
-  // 컴포넌트 마운트 시 백엔드에서 현재 턴 정보 가져오기 (예시)
-  useEffect(() => {
-    // 실제로는 WebSocket이나 API 호출
-    // fetchCurrentTurn().then(handleTurnUpdate);
-    
-    // 테스트용 가짜 데이터
-    const now = new Date();
-    const testTurnData = {
-      startTime: now.toISOString(), // 현재 시간
-      endTime: new Date(now.getTime() + 60000).toISOString(), // 2분 후
-      currentDrawerId: 1
-    };
-    handleTurnUpdate(testTurnData);
-  }, []);
-
   return (
     <Background>
       <div className={styles.gameRoom}>
@@ -114,7 +154,7 @@ const GameRoom = () => {
             <img src={logo} alt="DrawCen" />
           </div>
           <div className={styles.roomCode}>
-            방코드: {roomCode}
+            방번호: {currentRoomCode || roomCode || '로딩중...'}
           </div>
         </div>
 
