@@ -44,8 +44,29 @@ api.interceptors.response.use(
     
     // 40101 에러 (ACCESS_TOKEN_EXPIRED) 처리
     if (error.response?.status === 401 && 
-        error.response?.data?.code === 40101 && 
-        !originalRequest._retry) {
+        error.response?.data?.code === 40101) {
+      
+      // 재시도 횟수 초기화 및 증가
+      originalRequest._retryCount = (originalRequest._retryCount || 0) + 1;
+      
+      // 2번 초과 재시도 시 로그아웃 처리
+      if (originalRequest._retryCount > 2) {
+        // localStorage 정리
+        try {
+          localStorage.removeItem('drawcen_user');
+          localStorage.removeItem('token');
+          localStorage.removeItem('refreshToken');
+        } catch (e) {
+          // localStorage 정리 실패 시 무시
+        }
+        
+        // 랜딩페이지로 리다이렉트
+        if (window.location.pathname !== '/') {
+          window.location.href = '/';
+        }
+        
+        return Promise.reject(error);
+      }
       
       if (isRefreshing) {
         // 이미 재발급 요청 중이면 대기
@@ -59,7 +80,6 @@ api.interceptors.response.use(
         });
       }
 
-      originalRequest._retry = true;
       isRefreshing = true;
 
       try {
