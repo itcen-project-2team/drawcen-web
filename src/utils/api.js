@@ -44,7 +44,8 @@ api.interceptors.response.use(
     
     // 40101 에러 (ACCESS_TOKEN_EXPIRED) 처리
     if (error.response?.status === 401 && 
-        error.response?.data?.code === 40101) {
+        error.response?.data?.code === 40101 &&
+        !originalRequest.url?.includes('/api/auth/logout')) {
       
       // 재시도 횟수 초기화 및 증가
       originalRequest._retryCount = (originalRequest._retryCount || 0) + 1;
