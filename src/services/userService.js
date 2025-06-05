@@ -20,6 +20,37 @@ export const checkLogIn = async () => {
   }
 };
 
+// 현재 참여 중인 방 정보 조회
+export const getCurrentRoom = async () => {
+  try {
+    console.log('현재 방 정보 조회 시작');
+    const response = await api.get("/api/member/current-room");
+    console.log('현재 방 정보 조회 성공:', response.data);
+    return response.data; // { roomCode: number, participants: [...] } 또는 null
+  } catch (error) {
+    // 404는 참여 중인 방이 없음을 의미할 수 있음
+    if (error.response?.status === 404) {
+      console.log('참여 중인 방 없음');
+      return null;
+    }
+    console.error('현재 방 정보 조회 실패:', error);
+    
+    // API가 없는 경우 대안: member 정보에서 현재 방 정보 추출 시도
+    try {
+      console.log('대안: member 정보에서 현재 방 정보 확인');
+      const memberResponse = await api.get("/api/member");
+      if (memberResponse.data && memberResponse.data.currentRoom) {
+        console.log('member 정보에서 현재 방 정보 발견:', memberResponse.data.currentRoom);
+        return memberResponse.data.currentRoom;
+      }
+    } catch (fallbackError) {
+      console.log('member 정보에서도 현재 방 정보 없음');
+    }
+    
+    return null;
+  }
+};
+
 // 사용자 정보 가져오기 예시
 export const getUser = async (userId) => {
   try {
