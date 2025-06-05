@@ -1,24 +1,31 @@
 // API 에러를 일관되게 처리하는 함수
-export default function handleApiError(error) {
-  let message = "알 수 없는 에러가 발생했습니다.";
-
+const handleApiError = (error) => {
   if (error.response) {
-    // 서버가 응답한 에러
-    message = error.response.data?.message || `오류 코드: ${error.response.status}`;
+    // 서버가 응답했지만 오류 상태 코드
+    const { status, data } = error.response;
+    
+    switch (status) {
+      case 401:
+        // 인증 오류 - 로그인 페이지로 리다이렉트
+        break;
+      case 403:
+        // 권한 없음
+        break;
+      case 404:
+        // 리소스를 찾을 수 없음
+        break;
+      case 500:
+        // 서버 내부 오류
+        break;
+      default:
+        // 기타 오류
+        break;
+    }
   } else if (error.request) {
-    // 요청은 됐으나 응답이 없음
-    message = "서버로부터 응답이 없습니다.";
-  } else if (error.message) {
-    // 기타 에러
-    message = error.message;
+    // 요청이 만들어졌지만 응답을 받지 못함 (네트워크 오류)
+  } else {
+    // 요청을 설정하는 중에 오류가 발생
   }
+};
 
-  // 콘솔에 에러 전체 출력 (개발용)
-  console.error(error);
-
-  // 사용자에게 알림 (alert 또는 toast 등으로 대체 가능)
-  alert(message);
-
-  // 필요시 에러 메시지 반환
-  return message;
-} 
+export default handleApiError; 

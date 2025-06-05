@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import './Main.css';
+import PageWrapper from '../../components/PageWrapper/PageWrapper';
 import Modal from '../../components/modal/Modal';
 import Button from '../../components/button/Button';
 import background from '../../assets/background.png';
@@ -32,7 +33,6 @@ const Main = () => {
           navigate('/');
         }
       } catch (error) {
-        console.error('Main - 로그인 상태 확인 실패:', error);
         navigate('/');
       } finally {
         setIsCheckingLogin(false);
@@ -44,7 +44,6 @@ const Main = () => {
 
   const handleCreateRoom = () => {
     // TODO: 방 생성 로직 구현
-    console.log('방 생성');
   };
 
   const handleJoinRoom = () => {
@@ -63,7 +62,6 @@ const Main = () => {
 
   const handleTeamCodeInput = () => {
     // TODO: 팀 코드 입력 로직 구현
-    console.log('팀 코드 입력');
   };
 
   const handleEditProfile = () => {
@@ -73,7 +71,6 @@ const Main = () => {
 
   const handleNicknameChange = () => {
     // TODO: 닉네임 변경 로직 구현
-    console.log('닉네임 수정');
   };
 
   const handleRoomCodeChange = (index, value) => {
@@ -93,7 +90,6 @@ const Main = () => {
   const handleRoomEnter = () => {
     const code = roomCode.join('');
     if (code.length === 6) {
-      console.log('방 입장:', code);
       // TODO: 방 입장 로직 구현
     }
   };
@@ -110,16 +106,13 @@ const Main = () => {
     try {
       // 1. 서버에 로그아웃 요청
       await logout();
-      console.log('서버 로그아웃 완료');
       
       // 2. 전역 상태 초기화
       deleteUser();
-      console.log('전역 상태 초기화 완료');
       
       // 3. 랜딩페이지로 이동
       navigate('/');
     } catch (error) {
-      console.error('로그아웃 처리 중 오류:', error);
       // 에러가 발생해도 전역 상태는 초기화하고 로그인 페이지로 이동
       deleteUser();
       navigate('/');
@@ -129,28 +122,29 @@ const Main = () => {
   // 로그인 상태 체크 중이면 로딩 표시
   if (isCheckingLogin) {
     return (
-      <div className="main" style={{ backgroundImage: `url(${background})` }}>
-        <div style={{ color: 'white', fontSize: '18px', textAlign: 'center', marginTop: '50vh' }}>
-          로그인 상태 확인 중...
-        </div>
-      </div>
+      <PageWrapper 
+        className="main" 
+        backgroundImage={background} 
+        isLoading={true} 
+        loadingText="로그인 상태 확인 중..."
+      />
     );
   }
 
   return (
-    <div className="main" style={{ backgroundImage: `url(${background})` }}>
+    <PageWrapper className="main" backgroundImage={background}>
       {/* 로그아웃 버튼 */}
-      <button className="logout-button" onClick={handleLogout}>
+      <button className="logout-button content-animate" onClick={handleLogout}>
         로그아웃
       </button>
       
-      <div className="profile-container" onClick={handleProfileClick}>
+      <div className="profile-container content-animate" onClick={handleProfileClick}>
         <img src={pink} alt="Profile" className="profile-image" />
         <span className="profile-text">{user.nickname || user.id || '사용자'}</span>
       </div>
-      <div className="main-content">
-        <img src={logo} alt="DrawCen Logo" className="main-logo" />
-        <div className="button-container">
+      <div className="main-content main-content-animate">
+        <img src={logo} alt="DrawCen Logo" className="main-logo logo-animate" />
+        <div className="button-container content-animate-delay-1">
           <button className="game-button create-room" onClick={handleCreateRoom}>
             방 생성
           </button>
@@ -213,7 +207,7 @@ const Main = () => {
           </Button>
         </div>
       </Modal>
-    </div>
+    </PageWrapper>
   );
 };
 

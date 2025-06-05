@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import './LandingPage.css';
+import PageWrapper from '../../components/PageWrapper/PageWrapper';
 import background from '../../assets/background.png';
 import logo from '../../assets/logo.png';
 import loginBtn from '../../assets/loginbtn.png';
@@ -8,11 +9,16 @@ import playGuide1 from '../../assets/playguide-01.png';
 import playGuide2 from '../../assets/playguide-02.png';
 import playGuide3 from '../../assets/playguide-03.png';
 import playGuide4 from '../../assets/playguide-04.png';
-import { kakaoLogin } from '../../services/userService';
+import { kakaoLogin, checkLogIn } from '../../services/userService';
+import useUserStore from '../../stores/userStore';
 
 const LandingPage = () => {
   const navigate = useNavigate();
   const [currentGuide, setCurrentGuide] = useState(0);
+  const [isCheckingLogin, setIsCheckingLogin] = useState(true);
+  
+  // useUserStore에서 필요한 함수들 가져오기
+  const { setUser, isLoggedIn } = useUserStore();
   
   const guideImages = [playGuide1, playGuide2, playGuide3, playGuide4];
   const guideTexts = [
@@ -22,35 +28,32 @@ const LandingPage = () => {
     "안녕하세요4444안녕하세요안녕하세요안녕하세요안녕하세요"
   ];
 
-  // 쿠키에서 access_token 확인하는 함수
-  const getAccessTokenFromCookie = () => {
-    const cookies = document.cookie.split(';');
-    for (let cookie of cookies) {
-      const [name, value] = cookie.trim().split('=');
-      if (name === 'access_token') {
-        return value;
-      }
-    }
-    return null;
-  };
-
-  // 로그인 상태 확인 (쿠키 기반, API 요청 없음)
+  // 페이지 로드 시 로그인 상태 체크
   useEffect(() => {
-    const checkLoginStatus = () => {
-      const accessToken = getAccessTokenFromCookie();
-      
-      if (accessToken) {
-        console.log('access_token 쿠키 발견, 로그인 성공으로 간주');
-        console.log('메인페이지로 이동합니다.');
-        navigate('/main');
-      } else {
-        console.log('access_token 쿠키 없음, 랜딩페이지 유지');
+    const checkLoginStatus = async () => {
+      setIsCheckingLogin(true);
+      try {
+        const userData = await checkLogIn();
+        if (userData) {
+          // 로그인된 상태 - 서버에서 { email: "user@example.com" } 형태로 응답
+          setUser(userData);
+        }
+      } catch (error) {
+        // 로그인 상태 확인 실패 시 무시
+      } finally {
+        setIsCheckingLogin(false);
       }
     };
 
-    // 페이지 로드 시 즉시 확인 (API 요청 없이 쿠키만 확인)
     checkLoginStatus();
-  }, [navigate]);
+  }, [setUser]);
+
+  // 로그인 상태 확인 후 메인페이지로 리다이렉트
+  useEffect(() => {
+    if (!isCheckingLogin && isLoggedIn) {
+      navigate('/main');
+    }
+  }, [isLoggedIn, isCheckingLogin, navigate]);
 
   useEffect(() => {
     const timer = setInterval(() => {
@@ -64,15 +67,27 @@ const LandingPage = () => {
     kakaoLogin();
   };
 
+  // 로그인 상태 체크 중이면 로딩 표시
+  if (isCheckingLogin) {
+    return (
+      <PageWrapper 
+        className="App" 
+        backgroundImage={background} 
+        isLoading={true} 
+        loadingText="로그인 상태 확인 중..."
+      />
+    );
+  }
+
   const handleDotClick = (index) => {
     setCurrentGuide(index);
   };
 
   return (
-    <div className="App" style={{ backgroundImage: `url(${background})` }}>
+    <PageWrapper className="App" backgroundImage={background}>
       <div className="content-wrapper">
-        <img src={logo} alt="DrawCen Logo" className="logo" />
-        <div className="main-container">
+        <img src={logo} alt="DrawCen Logo" className="logo logo-animate" />
+        <div className="main-container container-animate">
           <div className="container-inner">
             <div className="left-section">
               <div className="main-text">단어를 그림으로 표현하고 맞히는<br />그림 퀴즈 게임!</div>
@@ -141,7 +156,7 @@ const LandingPage = () => {
           </div>
         </div>
       </div>
-    </div>
+    </PageWrapper>
   );
 };
 
