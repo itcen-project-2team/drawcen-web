@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import './LandingPage.css';
+import PageWrapper from '../../components/PageWrapper/PageWrapper';
 import background from '../../assets/background.png';
 import logo from '../../assets/logo.png';
 import loginBtn from '../../assets/loginbtn.png';
@@ -33,16 +34,12 @@ const LandingPage = () => {
       setIsCheckingLogin(true);
       try {
         const userData = await checkLogIn();
-        console.log('checkLogIn 응답:', userData);
         if (userData) {
           // 로그인된 상태 - 서버에서 { email: "user@example.com" } 형태로 응답
-          console.log('로그인 상태 확인됨, setUser 호출:', userData);
           setUser(userData);
-        } else {
-          console.log('로그인 상태 아님');
         }
       } catch (error) {
-        console.error('로그인 상태 확인 실패:', error);
+        // 로그인 상태 확인 실패 시 무시
       } finally {
         setIsCheckingLogin(false);
       }
@@ -73,13 +70,12 @@ const LandingPage = () => {
   // 로그인 상태 체크 중이면 로딩 표시
   if (isCheckingLogin) {
     return (
-      <div className="App" style={{ backgroundImage: `url(${background})` }}>
-        <div className="content-wrapper">
-          <div style={{ color: 'white', fontSize: '18px', textAlign: 'center' }}>
-            로그인 상태 확인 중...
-          </div>
-        </div>
-      </div>
+      <PageWrapper 
+        className="App" 
+        backgroundImage={background} 
+        isLoading={true} 
+        loadingText="로그인 상태 확인 중..."
+      />
     );
   }
 
@@ -88,10 +84,10 @@ const LandingPage = () => {
   };
 
   return (
-    <div className="App" style={{ backgroundImage: `url(${background})` }}>
+    <PageWrapper className="App" backgroundImage={background}>
       <div className="content-wrapper">
-        <img src={logo} alt="DrawCen Logo" className="logo" />
-        <div className="main-container">
+        <img src={logo} alt="DrawCen Logo" className="logo logo-animate" />
+        <div className="main-container container-animate">
           <div className="container-inner">
             <div className="left-section">
               <div className="main-text">단어를 그림으로 표현하고 맞히는<br />그림 퀴즈 게임!</div>
@@ -160,7 +156,7 @@ const LandingPage = () => {
           </div>
         </div>
       </div>
-    </div>
+    </PageWrapper>
   );
 };
 

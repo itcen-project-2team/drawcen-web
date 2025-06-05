@@ -1,10 +1,11 @@
 import React, { useState, useEffect } from "react";
 import { useParams } from "react-router-dom";
-import Background from "../../components/background/Background";
+import PageWrapper from "../../components/PageWrapper/PageWrapper";
 import PlayerList from "./PlayerList";
 import Canvas from "./Canvas";
 import ChatBox from "./ChatBox";
 import styles from "./GameRoom.module.css";
+import background from "../../assets/background.png";
 import logo from "../../assets/logo.png";
 import avatar from "../../assets/default-avatar.png";
 
@@ -105,11 +106,15 @@ const GameRoom = () => {
     handleTurnUpdate(testTurnData);
   }, []);
 
+  const handleTimeUp = () => {
+    // TODO: 턴 종료 로직 구현
+  };
+
   return (
-    <Background>
-      <div className={styles.gameRoom}>
+    <PageWrapper backgroundImage={background}>
+      <div className={`${styles.gameRoom} content-animate`}>
         {/* 상단 헤더 */}
-        <div className={styles.header}>
+        <div className={`${styles.header} content-animate-delay-1`}>
           <div className={styles.logo}>
             <img src={logo} alt="DrawCen" />
           </div>
@@ -119,7 +124,7 @@ const GameRoom = () => {
         </div>
 
         {/* 메인 게임 영역 */}
-        <div className={styles.gameContent}>
+        <div className={`${styles.gameContent} content-animate-delay-2`}>
           <div className={styles.leftSection}>
             <PlayerList players={players} />
           </div>
@@ -133,7 +138,7 @@ const GameRoom = () => {
           </div>
         </div>
       </div>
-    </Background>
+    </PageWrapper>
   );
 };
 
