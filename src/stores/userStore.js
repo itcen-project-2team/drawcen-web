@@ -3,46 +3,62 @@ import { create } from "zustand";
 // localStorage에서 사용자 상태 불러오기
 const loadUserFromStorage = () => {
   try {
-    const storedUser = localStorage.getItem('drawcen_user');
-    return storedUser ? JSON.parse(storedUser) : { user: null, isLoggedIn: false };
+    const stored = localStorage.getItem('drawcen_user');
+    return stored ? JSON.parse(stored) : null;
   } catch (error) {
-    console.error('사용자 상태 로드 실패:', error);
-    return { user: null, isLoggedIn: false };
+    return null;
   }
 };
 
 // localStorage에 사용자 상태 저장
-const saveUserToStorage = (user, isLoggedIn) => {
+const saveUserToStorage = (user) => {
   try {
-    localStorage.setItem('drawcen_user', JSON.stringify({ user, isLoggedIn }));
+    localStorage.setItem('drawcen_user', JSON.stringify(user));
   } catch (error) {
-    console.error('사용자 상태 저장 실패:', error);
+    // 저장 실패 시 무시
+  }
+};
+
+const removeUserFromStorage = () => {
+  try {
+    localStorage.removeItem('drawcen_user');
+  } catch (error) {
+    // 제거 실패 시 무시
   }
 };
 
 // 초기 상태 로드
 const initialState = loadUserFromStorage();
 
-const useUserStore = create((set) => ({
-  user: initialState.user, // { id, nickname, email } 형태
-  isLoggedIn: initialState.isLoggedIn, // 로그인 여부
+const useUserStore = create((set, get) => ({
+  user: initialState,
+  isLoggedIn: !!initialState,
 
   // 유저 정보 설정 (로그인 시)
   setUser: (userData) => {
-    console.log('setUser 호출됨, 받은 데이터:', userData);
-    const user = userData; // 서버에서 받은 전체 데이터 저장 (id, nickname, email)
-    console.log('저장할 user 객체:', user);
+    const user = userData;
+    saveUserToStorage(user);
     set({ user, isLoggedIn: true });
-    saveUserToStorage(user, true);
-    console.log('localStorage에 저장 완료');
   },
 
   // 로그아웃
   deleteUser: () => {
-    set({ user: null, isLoggedIn: false });
-    saveUserToStorage(null, false);
-    localStorage.removeItem('drawcen_user');
+    removeUserFromStorage();
+    
+    set({ 
+      user: null, 
+      isLoggedIn: false 
+    });
   },
+
+  updateUser: (updates) => {
+    const { user } = get();
+    if (user) {
+      const updatedUser = { ...user, ...updates };
+      saveUserToStorage(updatedUser);
+      set({ user: updatedUser });
+    }
+  }
 }));
 
 export default useUserStore; 
