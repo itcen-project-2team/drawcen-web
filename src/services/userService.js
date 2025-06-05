@@ -6,8 +6,8 @@ export const checkLogIn = async () => {
   try {
     console.log('checkLogIn 요청 시작');
     console.log('API baseURL:', process.env.REACT_APP_API_URL);
-    console.log('요청 URL:', `${process.env.REACT_APP_API_URL}/api/auth/me`);
-    const response = await api.get("/api/auth/me");
+    console.log('요청 URL:', `${process.env.REACT_APP_API_URL}/api/member`);
+    const response = await api.get("/api/member");
     console.log('checkLogIn 성공:', response.data);
     return response.data;
   } catch (error) {

@@ -9,12 +9,12 @@ pipeline {
 
         // GitHub
         GIT_TARGET_BRANCH = 'develop'
-        GIT_REPOSITORY_URL = 'https://github.com/itcen-project-2team/sketch-quiz-web'
+        GIT_REPOSITORY_URL = 'https://github.com/itcen-project-2team/drawcen-web.git'
         GIT_CREDENTIALS_ID = 'jenkins-credential'
 
         // AWS ECR
         AWS_ECR_CREDENTIAL_ID = 'AWS_ECR_CREDENTIAL'
-        AWS_ECR_URI = '010686621060.dkr.ecr.ap-northeast-2.amazonaws.com'
+        AWS_ECR_URI = '010686621060.dkr.ecr.ap-northeast-2.amazonaws.com/2team/front-ecr'
         AWS_ECR_IMAGE_NAME = '2team/front-ecr'
         AWS_REGION = 'ap-northeast-2'
 
@@ -40,17 +40,26 @@ pipeline {
         stage('Build Docker Image') {
             steps {
                 sh """
-                docker build -t ${AWS_ECR_IMAGE_NAME}:${BUILD_NUMBER} .
+                docker build -t ${AWS_ECR_URI}:${BUILD_NUMBER} .
                 """
             }
         }
 
         stage('Login to ECR') {
             steps {
-                withCredentials([[$class: 'AmazonWebServicesCredentialsBinding', credentialsId: "${AWS_ECR_CREDENTIAL_ID}"]]) {
-                    sh """
-                    aws ecr get-login-password --region ${AWS_REGION} | docker login --username AWS --password-stdin ${AWS_ECR_URI}
-                    """
+                withCredentials([[$class: 'AmazonWebServicesCredentialsBinding', credentialsId: AWS_ECR_CREDENTIAL_ID]]) {
+                    script {
+                        def status = sh(
+                            script: '''
+                                set -eux
+                                aws ecr get-login-password --region $AWS_REGION | docker login --username AWS --password-stdin $AWS_ECR_URI
+                            ''',
+                            returnStatus: true
+                        )
+                        if (status != 0) {
+                            error "ECR 로그인 실패, 상태 코드: ${status}"
+                        }
+                    }
                 }
             }
         }
@@ -58,7 +67,7 @@ pipeline {
         stage('Push Docker Image to ECR') {
             steps {
                 sh """
-                docker push ${AWS_ECR_IMAGE_NAME}:${BUILD_NUMBER}
+                docker push ${AWS_ECR_URI}:${BUILD_NUMBER}
                 """
             }
         }
@@ -67,16 +76,17 @@ pipeline {
             steps {
                 sshagent(credentials: ['webserver-ssh-key']) {
                     sh """
-                    scp -o StrictHostKeyChecking=no docker-compose.yml ubuntu@${WEB_IP}:~/app/
                     ssh -o StrictHostKeyChecking=no ubuntu@${WEB_IP} '
-                        cd ~/app
-                        docker-compose down || true
-                        IMAGE_TAG=${BUILD_NUMBER} docker-compose up -d --build
+                        docker rm -f frontend || true
+                        docker pull ${AWS_ECR_URI}:${BUILD_NUMBER}
+                        docker run -d --name frontend -p 80:80 ${AWS_ECR_URI}:${BUILD_NUMBER}
                     '
                     """
                 }
             }
         }
+
+        
 
         stage('Cleanup') {
             steps {

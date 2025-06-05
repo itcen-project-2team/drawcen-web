@@ -13,9 +13,11 @@ import useUserStore from '../../stores/userStore';
 
 const LandingPage = () => {
   const navigate = useNavigate();
-  const { setUser, isLoggedIn } = useUserStore();
   const [currentGuide, setCurrentGuide] = useState(0);
   const [isCheckingLogin, setIsCheckingLogin] = useState(true);
+  
+  // useUserStore에서 필요한 함수들 가져오기
+  const { setUser, isLoggedIn } = useUserStore();
   
   const guideImages = [playGuide1, playGuide2, playGuide3, playGuide4];
   const guideTexts = [
