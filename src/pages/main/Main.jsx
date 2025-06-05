@@ -123,6 +123,15 @@ const Main = () => {
       
       setCurrentRoomCode(roomData.roomCode);
       
+      // 2.5. 방 생성 직후 방장 정보를 미리 설정 (빠른 UI 반응을 위해)
+      const initialParticipant = [{
+        memberId: user.id,
+        memberName: user.nickname || user.id || '사용자',
+        host: true
+      }];
+      setParticipants(initialParticipant);
+      console.log('초기 방장 정보 설정:', initialParticipant);
+      
       // 3. 방 구독 (실시간 업데이트 수신)
       webSocketService.subscribeToRoom(roomData.roomCode, (message) => {
         console.log('방 메시지 수신:', message);

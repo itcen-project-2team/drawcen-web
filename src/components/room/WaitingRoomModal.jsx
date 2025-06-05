@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import './WaitingRoomModal.css';
 import Modal from '../modal/Modal';
 import Button from '../button/Button';
+import pink from '../../assets/pink.png';
 
 const WaitingRoomModal = ({ 
   isOpen, 
@@ -71,7 +72,11 @@ const WaitingRoomModal = ({
               return (
                 <div key={index} className="participant-item">
                   <div className="participant-avatar">
-                    {participant ? '👤' : ''}
+                    <div className="participant-avatar-inner">
+                      {participant ? (
+                        <img src={pink} alt="Profile" />
+                      ) : ''}
+                    </div>
                   </div>
                   <span className="participant-name">
                     {participant ? 
@@ -103,12 +108,6 @@ const WaitingRoomModal = ({
             </button>
           )}
         </div>
-
-        {isHost && participants.length < 2 && (
-          <div className="waiting-message">
-            게임을 시작하려면 최소 2명의 참가자가 필요합니다.
-          </div>
-        )}
       </div>
     </Modal>
   );
