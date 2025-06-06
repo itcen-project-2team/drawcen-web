@@ -129,8 +129,8 @@
 }
 
 .participant-avatar-inner {
-  width: 48px;
-  height: 48px;
+  width: 46px;
+  height: 46px;
   border-radius: 50%;
   background: rgba(0, 0, 0, 0.6);
   display: flex;
@@ -161,7 +161,7 @@
 }
 
 .waiting-room-actions button {
-  flex: 1;
+  width: 150px;
   max-width: 150px;
   background: linear-gradient(to bottom, rgba(69, 211, 255, 0.4) 0%, rgba(69, 211, 255, 0) 100%);
   border: 2px solid #C9C9C9;
@@ -215,15 +215,42 @@
   }
   
   .waiting-room-actions {
-    flex-direction: column;
+    gap: 10px;
   }
   
   .waiting-room-actions button {
+    width: 140px;
     max-width: none;
+    font-size: 17px;
+    padding: 11px 25px;
   }
   
   .room-code-section {
     flex-direction: column;
     gap: 8px;
+  }
+}
+
+/* 더 작은 화면에서도 가로 유지 */
+@media (max-width: 480px) {
+  .waiting-room-modal {
+    padding: 15px;
+    width: 95vw;
+  }
+  
+  .waiting-room-actions {
+    gap: 8px;
+  }
+  
+  .waiting-room-actions button {
+    width: 130px;
+    font-size: 16px;
+    padding: 10px 20px;
+    min-width: 0;
+  }
+  
+  .participants-list {
+    grid-template-columns: repeat(2, 1fr);
+    grid-template-rows: repeat(3, 1fr);
   }
 } 
