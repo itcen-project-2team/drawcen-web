@@ -40,6 +40,14 @@ const GameRoom = () => {
   const [timePercent, setTimePercent] = useState(100);
   const [remainingSeconds, setRemainingSeconds] = useState(0);
 
+  // 메시지 버퍼링을 위한 상태 (턴ID 기반 매칭)
+  const [pendingTurnData, setPendingTurnData] = useState(new Map());
+  
+  // WebSocket 연결 상태 관리
+  const [isWebSocketConnected, setIsWebSocketConnected] = useState(false);
+  const [connectionAttempts, setConnectionAttempts] = useState(0);
+  const maxRetryAttempts = 5;
+
   // ref를 항상 최신 상태로 동기화
   useEffect(() => {
     playersRef.current = players;
@@ -64,6 +72,25 @@ const GameRoom = () => {
   const checkIfCurrentDrawer = useCallback((drawerId) => {
     if (!currentUserRef.current) return false;
     return currentUserRef.current.id === drawerId || currentUserRef.current.memberId === drawerId;
+  }, []);
+
+  // 게임 종료 시 리소스 정리 함수 (handleGameMessage보다 먼저 정의)
+  const cleanupGameResources = useCallback(() => {
+    console.log('🧹 게임 리소스 정리 시작');
+    
+    try {
+      // 상태 초기화
+      setPendingTurnData(new Map());
+      setTimePercent(100);
+      setRemainingSeconds(0);
+      setIsCurrentDrawer(false);
+      setQuizWord("");
+      
+      console.log('✅ 게임 리소스 정리 완료');
+      
+    } catch (error) {
+      console.error('❌ 게임 리소스 정리 중 오류:', error);
+    }
   }, []);
 
   // WebSocket 게임 메시지 처리 (ref 사용으로 최신 상태 보장)
@@ -209,6 +236,9 @@ const GameRoom = () => {
             return;
           }
 
+          console.log('⏰ 턴 종료 처리 시작');
+
+          // 점수 업데이트
           setPlayers(prev => prev.map(player => {
             const memberScore = finishMembers.find(m => m.memberId === player.id);
             if (memberScore) {
@@ -217,10 +247,15 @@ const GameRoom = () => {
             return player;
           }));
           
+          // 턴 관련 상태 초기화
           setPlayers(prev => prev.map(player => ({ ...player, isDrawing: false })));
           setIsCurrentDrawer(false);
           setQuizWord("");
           setTimePercent(100);
+          setRemainingSeconds(0);
+          
+          // 펜딩 턴 데이터 정리
+          setPendingTurnData(new Map());
           
           setMessages(prev => [...prev, {
             id: Date.now(),
@@ -228,6 +263,8 @@ const GameRoom = () => {
             message: '⏰ 턴이 종료되었습니다. 점수가 업데이트되었습니다.',
             timestamp: new Date()
           }]);
+          
+          console.log('✅ 턴 종료 처리 완료');
           break;
 
         case 'GAME_FINISH':
@@ -243,6 +280,9 @@ const GameRoom = () => {
             return;
           }
 
+          console.log('🏁 게임 종료 처리 시작');
+
+          // 점수 업데이트
           setPlayers(prev => prev.map(player => {
             const memberScore = gameFinishMembers.find(m => m.memberId === player.id);
             if (memberScore) {
@@ -251,12 +291,13 @@ const GameRoom = () => {
             return player;
           }));
           
-          // 최신 players 상태 사용
+          // 우승자 계산
           const sortedPlayers = gameFinishMembers.sort((a, b) => b.score - a.score);
           const winner = sortedPlayers[0];
           const winnerPlayer = playersRef.current.find(p => p.id === winner?.memberId);
           const winnerName = winnerPlayer ? winnerPlayer.nickname : `참가자 ${winner?.memberId}`;
           
+          // 게임 종료 메시지 추가
           setMessages(prev => [...prev, {
             id: Date.now(),
             type: 'system',
@@ -264,7 +305,34 @@ const GameRoom = () => {
             timestamp: new Date()
           }]);
           
-          setTimeout(() => {
+          console.log('🏆 우승자:', winnerName, '점수:', winner?.score);
+          
+          // 3초 후 정리 및 메인 페이지 이동
+          setTimeout(async () => {
+            console.log('🔄 메인 페이지 이동 준비');
+            
+            // WebSocket 연결 해제
+            try {
+              if (webSocketService.isWebSocketConnected()) {
+                console.log('🔌 게임 종료 - WebSocket 연결 해제 시작');
+                webSocketService.unsubscribeFromTopic(`/topic/game/${gameId}`);
+                webSocketService.unsubscribeFromTopic(`/user/topic/game/${gameId}`);
+                webSocketService.unsubscribeFromTopic(`/topic/game/${gameId}/chat`);
+                webSocketService.unsubscribeFromTopic('/user/queue/errors');
+                webSocketService.disconnect();
+                console.log('✅ 게임 종료 - WebSocket 연결 해제 완료');
+              }
+              setIsWebSocketConnected(false);
+              setConnectionAttempts(0);
+            } catch (error) {
+              console.error('❌ WebSocket 연결 해제 중 오류:', error);
+            }
+            
+            // 게임 상태 정리
+            cleanupGameResources();
+            
+            // 메인 페이지로 이동
+            console.log('🏠 메인 페이지로 이동');
             navigate('/main');
           }, 3000);
           break;
@@ -355,57 +423,149 @@ const GameRoom = () => {
     }
   }, [roomCode, gameId, location.state, convertGameParticipants]);
 
-  // WebSocket 구독 설정 (의존성 최소화)
-  useEffect(() => {
+  // WebSocket 연결 함수 (useEffect보다 먼저 정의)
+  const stompConnect = useCallback(async () => {
     if (!gameId) return;
+    
+    try {
+      console.log('🔌 WebSocket 연결 시작');
+      
+      // WebSocket 연결
+      await webSocketService.connect();
+      setIsWebSocketConnected(true);
+      setConnectionAttempts(0);
+      
+      console.log('✅ WebSocket 연결 성공');
 
-    const setupWebSocket = async () => {
-      try {
-        if (!webSocketService.isWebSocketConnected()) {
-          await webSocketService.connect();
-        }
+      // 게임 관련 토픽 구독
+      webSocketService.subscribeToTopic(`/topic/game/${gameId}`, (message) => {
+        console.log('📨 [/topic/game] 메시지 수신:', message);
+        handleGameMessage(message);
+      });
+      
+      webSocketService.subscribeToTopic(`/user/topic/game/${gameId}`, (message) => {
+        console.log('🎯 [/user/topic/game] 메시지 수신 (출제자 전용):', message);
+        handleGameMessage(message);
+      });
+      
+      webSocketService.subscribeToTopic(`/topic/game/${gameId}/chat`, (message) => {
+        console.log('💬 [/topic/game/chat] 메시지 수신:', message);
+        handleChatMessage(message);
+      });
+      
+      webSocketService.subscribeToTopic('/user/queue/errors', (message) => {
+        console.log('🚨 [/user/queue/errors] 메시지 수신:', message);
+        handleErrorMessage(message);
+      });
 
-        console.log('게임 토픽 구독 시작:', gameId);
+      console.log('✅ 모든 게임 토픽 구독 완료');
+      
+    } catch (error) {
+      console.error('❌ WebSocket 연결 실패:', error);
+      setIsWebSocketConnected(false);
+      
+      // 재연결 시도
+      if (connectionAttempts < maxRetryAttempts) {
+        setConnectionAttempts(prev => prev + 1);
+        const retryDelay = Math.min(1000 * Math.pow(2, connectionAttempts), 10000);
+        console.log(`🔄 ${retryDelay}ms 후 재연결 시도...`);
         
-        webSocketService.subscribeToTopic(`/topic/game/${gameId}`, (message) => {
-          console.log('📨 [/topic/game] 메시지 수신:', message);
-          handleGameMessage(message);
-        });
-        
-        webSocketService.subscribeToTopic(`/user/topic/game/${gameId}`, (message) => {
-          console.log('🎯 [/user/topic/game] 메시지 수신 (출제자 전용):', message);
-          handleGameMessage(message);
-        });
-        
-        webSocketService.subscribeToTopic(`/topic/game/${gameId}/chat`, (message) => {
-          console.log('📨 [/topic/game/chat] 메시지 수신:', message);
-          handleChatMessage(message);
-        });
-        
-        webSocketService.subscribeToTopic('/user/queue/errors', (message) => {
-          console.log('📨 [/user/queue/errors] 메시지 수신:', message);
-          handleErrorMessage(message);
-        });
-
-        console.log('모든 게임 토픽 구독 완료');
-        
-      } catch (error) {
-        console.error('WebSocket 설정 실패:', error);
+        setTimeout(() => {
+          stompConnect();
+        }, retryDelay);
+      } else {
+        console.error('❌ 최대 재연결 시도 횟수 초과');
+        setMessages(prev => [...prev, {
+          id: Date.now(),
+          type: 'error',
+          message: '🚨 서버와의 연결이 끊어졌습니다. 페이지를 새로고침해주세요.',
+          timestamp: new Date()
+        }]);
       }
-    };
+    }
+  }, [gameId, connectionAttempts, maxRetryAttempts, handleGameMessage, handleChatMessage, handleErrorMessage]);
 
-    setupWebSocket();
-
-    return () => {
-      console.log('GameRoom 언마운트, 구독 해제');
+  // WebSocket 연결 해제 함수 (useEffect보다 먼저 정의)
+  const stompDisconnect = useCallback(async () => {
+    try {
+      console.log('🔌 WebSocket 연결 해제 시작');
+      
       if (webSocketService.isWebSocketConnected()) {
+        // 구독 해제
         webSocketService.unsubscribeFromTopic(`/topic/game/${gameId}`);
         webSocketService.unsubscribeFromTopic(`/user/topic/game/${gameId}`);
         webSocketService.unsubscribeFromTopic(`/topic/game/${gameId}/chat`);
         webSocketService.unsubscribeFromTopic('/user/queue/errors');
+        
+        // 연결 해제
+        webSocketService.disconnect();
+        console.log('✅ WebSocket 연결 해제 완료');
+      }
+      
+      setIsWebSocketConnected(false);
+      setConnectionAttempts(0);
+      
+    } catch (error) {
+      console.error('❌ WebSocket 연결 해제 중 오류:', error);
+    }
+  }, [gameId]);
+
+  // WebSocket 연결 관리 (단순화된 버전)
+  useEffect(() => {
+    if (!gameId) return;
+    
+    console.log('🎮 GameRoom 마운트 - WebSocket 연결 시작');
+    stompConnect();
+    
+    // 브라우저 종료/페이지 이탈 시 WebSocket 정리
+    const handleBeforeUnload = (event) => {
+      console.log('🚪 페이지 이탈 감지 - WebSocket 정리');
+      try {
+        if (webSocketService.isWebSocketConnected()) {
+          // 동기적으로 빠르게 정리 (브라우저가 페이지를 닫기 전)
+          webSocketService.unsubscribeFromTopic(`/topic/game/${gameId}`);
+          webSocketService.unsubscribeFromTopic(`/user/topic/game/${gameId}`);
+          webSocketService.unsubscribeFromTopic(`/topic/game/${gameId}/chat`);
+          webSocketService.unsubscribeFromTopic('/user/queue/errors');
+          webSocketService.disconnect();
+          console.log('✅ 페이지 이탈 시 WebSocket 정리 완료');
+        }
+      } catch (error) {
+        console.error('❌ 페이지 이탈 시 정리 중 오류:', error);
       }
     };
-  }, [gameId, handleGameMessage, handleChatMessage, handleErrorMessage]);
+
+    // 페이지 가시성 변경 시 처리 (탭 변경, 최소화 등)
+    const handleVisibilityChange = () => {
+      if (document.hidden) {
+        console.log('📱 페이지가 숨겨짐 (탭 변경/최소화)');
+        // 필요시 연결 상태 확인 로직 추가
+      } else {
+        console.log('👁️ 페이지가 다시 보임');
+        // 연결 상태 확인 및 재연결 로직
+        if (!webSocketService.isWebSocketConnected()) {
+          console.log('🔄 연결이 끊어져 있어 재연결 시도');
+          stompConnect();
+        }
+      }
+    };
+
+    // 이벤트 리스너 등록
+    window.addEventListener('beforeunload', handleBeforeUnload);
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    
+    return () => {
+      console.log('🧹 GameRoom 언마운트 - WebSocket 정리');
+      
+      // 이벤트 리스너 제거
+      window.removeEventListener('beforeunload', handleBeforeUnload);
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+      
+      // WebSocket 정리
+      stompDisconnect();
+      cleanupGameResources();
+    };
+  }, [gameId, stompConnect, stompDisconnect, cleanupGameResources]);
 
   // 실시간 타이머 업데이트
   useEffect(() => {
@@ -474,6 +634,16 @@ const GameRoom = () => {
           </div>
           <div className={styles.roomCode}>
             방번호: {currentRoomCode || roomCode || '로딩중...'}
+          </div>
+          <div className={styles.connectionStatus}>
+            <span className={`${styles.statusIndicator} ${isWebSocketConnected ? styles.connected : styles.disconnected}`}>
+              {isWebSocketConnected ? '🟢 연결됨' : '🔴 연결끊김'}
+            </span>
+            {!isWebSocketConnected && connectionAttempts > 0 && (
+              <span className={styles.retryInfo}>
+                재연결 시도: {connectionAttempts}/{maxRetryAttempts}
+              </span>
+            )}
           </div>
           {turnInfo.startTime && (
             <div className={styles.timerDisplay}>

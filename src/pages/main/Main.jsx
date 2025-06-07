@@ -31,6 +31,9 @@ const Main = () => {
     const checkLoginStatus = async () => {
       setIsCheckingLogin(true);
       try {
+        // 메인 페이지 진입 시 게임 관련 WebSocket 연결 정리
+        cleanupGameConnections();
+
         const userData = await checkLogIn();
         if (userData) {
           // 로그인된 상태 - 서버에서 { email: "user@example.com" } 형태로 응답
@@ -50,6 +53,23 @@ const Main = () => {
 
     checkLoginStatus();
   }, [setUser, navigate]);
+
+  // 게임 관련 WebSocket 연결 정리 함수
+  const cleanupGameConnections = () => {
+    try {
+      console.log('🧹 메인 페이지 진입 - 게임 관련 연결 정리 시작');
+      
+      // WebSocket 서비스의 게임 구독 정리 메서드 사용
+      if (webSocketService.isWebSocketConnected()) {
+        webSocketService.cleanupGameSubscriptions();
+      }
+      
+      console.log('✅ 게임 관련 연결 정리 완료');
+      
+    } catch (error) {
+      console.error('❌ 게임 관련 연결 정리 중 오류:', error);
+    }
+  };
 
   // 현재 참여 중인 방 확인 및 자동 연결
   const checkCurrentRoom = async () => {
@@ -453,7 +473,6 @@ const Main = () => {
         onStartGame={handleStartGame}
         onLeaveRoom={handleLeaveRoom}
       />
-{/*     </div> */}
     </PageWrapper>
   );
 };

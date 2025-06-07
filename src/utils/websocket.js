@@ -192,6 +192,48 @@ class WebSocketService {
     return Array.from(this.subscriptions.keys());
   }
 
+  // 게임 관련 구독만 정리하는 메서드
+  cleanupGameSubscriptions() {
+    console.log('🧹 게임 관련 구독 정리 시작');
+    
+    const gameTopics = [];
+    this.subscriptions.forEach((subscription, topic) => {
+      if (topic.includes('/topic/game/') || 
+          topic.includes('/user/topic/game/') || 
+          topic.includes('/user/queue/errors')) {
+        gameTopics.push(topic);
+      }
+    });
+    
+    gameTopics.forEach(topic => {
+      this.unsubscribeFromTopic(topic);
+      console.log(`🗑️ 게임 구독 해제: ${topic}`);
+    });
+    
+    this.currentGameId = null;
+    console.log('✅ 게임 관련 구독 정리 완료');
+  }
+
+  // 방 관련 구독만 정리하는 메서드  
+  cleanupRoomSubscriptions() {
+    console.log('🧹 방 관련 구독 정리 시작');
+    
+    const roomTopics = [];
+    this.subscriptions.forEach((subscription, topic) => {
+      if (topic.includes('/topic/room/')) {
+        roomTopics.push(topic);
+      }
+    });
+    
+    roomTopics.forEach(topic => {
+      this.unsubscribeFromTopic(topic);
+      console.log(`🗑️ 방 구독 해제: ${topic}`);
+    });
+    
+    this.currentRoomCode = null;
+    console.log('✅ 방 관련 구독 정리 완료');
+  }
+
   // 레거시 메서드들 (하위 호환성)
   subscribeToGame(gameId) {
     console.warn('subscribeToGame은 deprecated입니다. subscribeToTopic을 사용하세요.');
