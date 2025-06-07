@@ -48,6 +48,9 @@ const GameRoom = () => {
   const [connectionAttempts, setConnectionAttempts] = useState(0);
   const maxRetryAttempts = 5;
 
+  // 중복 메시지 방지를 위한 최근 메시지 추적
+  const [recentMessages, setRecentMessages] = useState(new Set());
+
   // ref를 항상 최신 상태로 동기화
   useEffect(() => {
     playersRef.current = players;
@@ -56,6 +59,31 @@ const GameRoom = () => {
   useEffect(() => {
     currentUserRef.current = currentUser;
   }, [currentUser]);
+
+  // 중복 메시지 확인 함수
+  const isDuplicateMessage = useCallback((messageContent, messageType) => {
+    const messageKey = `${messageType}:${messageContent}`;
+    if (recentMessages.has(messageKey)) {
+      console.log('🚫 중복 메시지 감지:', messageKey);
+      return true;
+    }
+    
+    // 최근 메시지에 추가
+    setRecentMessages(prev => {
+      const newSet = new Set(prev);
+      newSet.add(messageKey);
+      
+      // 50개 이상이면 오래된 것부터 제거
+      if (newSet.size > 50) {
+        const oldestKey = newSet.values().next().value;
+        newSet.delete(oldestKey);
+      }
+      
+      return newSet;
+    });
+    
+    return false;
+  }, [recentMessages]);
 
   // 게임 참가자 데이터 변환 함수
   const convertGameParticipants = useCallback((gameParticipants) => {
@@ -141,10 +169,14 @@ const GameRoom = () => {
           const isDrawer = checkIfCurrentDrawer(drawerId);
           setIsCurrentDrawer(isDrawer);
           
+          // 출제자 닉네임 찾기
+          const drawerPlayer = playersRef.current.find(player => player.id === drawerId);
+          const drawerName = drawerPlayer ? drawerPlayer.nickname : `참가자 ${drawerId}`;
+          
           setMessages(prev => [...prev, {
             id: Date.now(),
             type: 'system',
-            message: `🎨 새로운 턴이 시작되었습니다! 출제자: ${drawerId}`,
+            message: `🎨 새로운 턴이 시작되었습니다! 출제자: ${drawerName}`,
             timestamp: new Date()
           }]);
           
@@ -175,7 +207,7 @@ const GameRoom = () => {
           setMessages(prev => [...prev, {
             id: Date.now(),
             type: 'drawer',
-            message: `🎯 출제 단어: "${quizWord}"`,
+            message: `출제 단어: "${quizWord}"`,
             timestamp: new Date(),
             isDrawerOnly: true
           }]);
@@ -186,6 +218,18 @@ const GameRoom = () => {
         case 'CHAT':
           if (typeof data !== 'string') {
             console.error('❌ CHAT 데이터가 문자열이 아닙니다:', data);
+            return;
+          }
+
+          // 정답 메시지인지 확인 (CORRECT 타입으로 따로 처리되므로 CHAT에서는 무시)
+          const correctMessagePattern = /님이 정답을 맞추셨습니다|정답입니다|맞추셨습니다/;
+          if (correctMessagePattern.test(data)) {
+            console.log('💡 정답 메시지는 CORRECT 타입으로 별도 처리되므로 CHAT에서 무시');
+            return;
+          }
+
+          // 중복 메시지 확인
+          if (isDuplicateMessage(data, 'chat')) {
             return;
           }
 
@@ -213,14 +257,16 @@ const GameRoom = () => {
           // 최신 players 상태 사용
           const correctPlayer = playersRef.current.find(player => player.id === memberId);
           const playerName = correctPlayer ? correctPlayer.nickname : `참가자 ${memberId}`;
+          // const correctMessage = `🎉 ${playerName}님이 정답을 맞추셨습니다!`;
           
-          setMessages(prev => [...prev, {
-            id: Date.now(),
-            type: 'correct',
-            message: `🎉 ${playerName}님이 정답을 맞추셨습니다!`,
-            timestamp: new Date(),
-            memberId
-          }]);
+
+          // setMessages(prev => [...prev, {
+          //   id: Date.now(),
+          //   type: 'correct',
+          //   // message: correctMessage,
+          //   timestamp: new Date(),
+          //   memberId
+          // }]);
           break;
 
         case 'FINISH':
@@ -351,10 +397,14 @@ const GameRoom = () => {
     
     try {
       if (message && message.type === 'CHAT' && typeof message.data === 'string') {
+        // 서버로부터 닉네임 정보를 받거나, 현재 사용자의 닉네임 사용
+        const nickname = message.nickname || currentUserRef.current?.nickname || currentUserRef.current?.id || '익명';
+        
         setMessages(prev => [...prev, {
           id: Date.now(),
           type: 'chat',
           message: message.data,
+          nickname: nickname,
           timestamp: new Date()
         }]);
       }

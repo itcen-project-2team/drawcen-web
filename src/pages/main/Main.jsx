@@ -133,21 +133,27 @@ const Main = () => {
   }, []);
 
   const handleCreateRoom = async () => {
+    if (!user || !user.id) {
+      console.error('사용자 정보가 없습니다.');
+      alert('로그인 정보를 확인해주세요.');
+      return;
+    }
+
     try {
       // 1. WebSocket 연결
       await webSocketService.connect();
       console.log('WebSocket 연결 완료');
 
       // 2. 서버에 방 생성 요청
-      const roomData = await createRoom(user.id);
+      const roomData = await createRoom(user?.id);
       console.log('방 생성 완료:', roomData);
 
       setCurrentRoomCode(roomData.roomCode);
 
       // 2.5. 방 생성 직후 방장 정보를 미리 설정 (빠른 UI 반응을 위해)
       const initialParticipant = [{
-        memberId: user.id,
-        memberName: user.nickname || user.id || '사용자',
+        memberId: user?.id,
+        memberName: user?.nickname || user?.id || '사용자',
         host: true
       }];
       setParticipants(initialParticipant);
@@ -388,7 +394,7 @@ const Main = () => {
       
       <div className="profile-container content-animate" onClick={handleProfileClick}>
         <img src={pink} alt="Profile" className="profile-image" />
-        <span className="profile-text">{user.nickname || user.id || '사용자'}</span>
+        <span className="profile-text">{user?.nickname || user?.id || '사용자'}</span>
       </div>
       <div className="main-content main-content-animate">
         <img src={logo} alt="DrawCen Logo" className="main-logo logo-animate" />
@@ -408,7 +414,7 @@ const Main = () => {
           <img src={pink} alt="Profile" className="modal-profile-image" />
           <div className="modal-profile-info">
             <img src={editIcon} alt="Edit" className="edit-icon" onClick={handleEditProfile} />
-            <span className="modal-profile-name">{user.nickname || user.id || '사용자'}</span>
+            <span className="modal-profile-name">{user?.nickname || user?.id || '사용자'}</span>
           </div>
         </div>
       </Modal>
