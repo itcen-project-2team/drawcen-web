@@ -49,6 +49,11 @@ const WaitingRoomModal = ({
     });
   };
 
+  useEffect(() => {
+    console.log('🔍 현재 사용자 정보:', currentUser);
+    console.log('🔍 게임 참가자 목록:', participants);
+  }, [currentUser, participants]);
+
   return (
     <Modal isOpen={isOpen} onClose={handleLeaveRoom}>
       <div className="waiting-room-modal">

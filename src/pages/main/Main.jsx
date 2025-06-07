@@ -87,7 +87,8 @@ const Main = () => {
                 gameData: {
                   gameId: message.gameId,
                   roomCode: message.roomCode,
-                  gameParticipants: message.gameParticipants
+                  gameParticipants: message.gameParticipants,
+                  currentUser: user
                 }
               }
             });
@@ -151,7 +152,8 @@ const Main = () => {
               gameData: {
                 gameId: message.gameId,
                 roomCode: message.roomCode,
-                gameParticipants: message.gameParticipants
+                gameParticipants: message.gameParticipants,
+                currentUser: user
               }
             }
           });
@@ -298,7 +300,8 @@ const Main = () => {
               gameData: {
                 gameId: message.gameId,
                 roomCode: message.roomCode,
-                gameParticipants: message.gameParticipants
+                gameParticipants: message.gameParticipants,
+                currentUser: user
               }
             }
           });

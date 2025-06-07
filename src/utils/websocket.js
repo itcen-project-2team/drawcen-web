@@ -4,8 +4,7 @@ import { Client } from '@stomp/stompjs';
 class WebSocketService {
   constructor() {
     this.client = null;
-    this.roomSubscription = null;
-    this.errorSubscription = null;
+    this.subscriptions = new Map(); // 구독 관리
     this.currentRoomCode = null;
     this.currentGameId = null;
     this.isConnected = false;
@@ -21,49 +20,24 @@ class WebSocketService {
   connect() {
     return new Promise((resolve, reject) => {
       const socket = new SockJS('http://localhost:8080/ws');
+      
+      // JWT 토큰을 localStorage에서 가져오기
+      const token = localStorage.getItem('token');
+      
       this.client = new Client({
         webSocketFactory: () => socket,
+        connectHeaders: {
+          // JWT 토큰을 헤더에 포함 (사용자 인증을 위해)
+          'Authorization': token ? `Bearer ${token}` : '',
+        },
         debug: (str) => {
           console.log('STOMP Debug:', str);
         },
         reconnectDelay: 5000,
         onConnect: (frame) => {
           console.log('WebSocket 연결 성공:', frame);
+          console.log('인증 토큰 포함됨:', !!token);
           this.isConnected = true;
-          
-          // 에러 구독
-          this.errorSubscription = this.client.subscribe('/user/queue/errors', (message) => {
-            console.error('WebSocket 에러:', message.body);
-            
-            try {
-              const errorData = JSON.parse(message.body);
-              
-              // 중복 참여 에러는 무시 (방 생성 후 자동 참여 시 발생 가능)
-              if (errorData.message && errorData.message.includes('이미 참여중인 방')) {
-                console.log('중복 참여 에러 무시:', errorData.message);
-                return;
-              }
-              
-              // 방 관련 에러는 콜백으로 알림
-              if (errorData.message) {
-                if (this.onErrorCallback) {
-                  this.onErrorCallback(errorData.message);
-                } else {
-                  alert(`에러: ${errorData.message}`);
-                }
-              }
-            } catch (parseError) {
-              // JSON 파싱 실패 시 원본 메시지 표시
-              console.error('에러 메시지 파싱 실패:', parseError);
-              const errorMsg = message.body;
-              if (this.onErrorCallback) {
-                this.onErrorCallback(errorMsg);
-              } else {
-                alert(`에러: ${errorMsg}`);
-              }
-            }
-          });
-          
           resolve();
         },
         onStompError: (frame) => {
@@ -84,6 +58,12 @@ class WebSocketService {
   // WebSocket 연결 해제
   disconnect() {
     if (this.client) {
+      // 모든 구독 해제
+      this.subscriptions.forEach((subscription) => {
+        subscription.unsubscribe();
+      });
+      this.subscriptions.clear();
+      
       this.client.deactivate();
       this.isConnected = false;
       this.currentRoomCode = null;
@@ -91,115 +71,134 @@ class WebSocketService {
     }
   }
 
-  // 방 구독
-  subscribeToRoom(roomCode, callback) {
+  // 토픽 구독 (범용)
+  subscribeToTopic(topic, callback) {
     if (!this.client || !this.isConnected) {
       console.error('WebSocket이 연결되지 않았습니다.');
-      return;
+      return null;
     }
 
-    this.currentRoomCode = roomCode;
-    
-    if (this.roomSubscription) {
-      this.roomSubscription.unsubscribe();
+    // 기존 구독이 있으면 해제
+    if (this.subscriptions.has(topic)) {
+      this.subscriptions.get(topic).unsubscribe();
     }
 
-    this.roomSubscription = this.client.subscribe(`/topic/room/${roomCode}`, (message) => {
-      console.log('방 정보 수신:', message.body);
-      const payload = JSON.parse(message.body);
-      
-      if (payload.type === 'GAME_STARTED') {
-        this.currentGameId = payload.gameId;
-        // 게임 관련 구독 추가
-        this.subscribeToGame(payload.gameId);
-      }
-      
-      if (callback) {
-        callback(payload);
+    const subscription = this.client.subscribe(topic, (message) => {
+      try {
+        const payload = JSON.parse(message.body);
+        console.log(`${topic} 메시지 수신:`, payload);
+        
+        if (callback) {
+          callback(payload);
+        }
+      } catch (error) {
+        console.error(`${topic} 메시지 파싱 오류:`, error);
+        // 원시 메시지로 콜백 호출
+        if (callback) {
+          callback(message.body);
+        }
       }
     });
+
+    this.subscriptions.set(topic, subscription);
+    console.log(`토픽 구독: ${topic}`);
+    return subscription;
   }
 
-  // 게임 구독
-  subscribeToGame(gameId) {
-    if (!this.client || !this.isConnected) return;
+  // 토픽 구독 해제
+  unsubscribeFromTopic(topic) {
+    if (this.subscriptions.has(topic)) {
+      this.subscriptions.get(topic).unsubscribe();
+      this.subscriptions.delete(topic);
+      console.log(`토픽 구독 해제: ${topic}`);
+    }
+  }
 
-    // 게임 턴 메시지 구독
-    this.client.subscribe(`/topic/game/${gameId}`, (message) => {
-      console.log('게임 턴 메시지:', message.body);
-    });
+  // 방 구독
+  subscribeToRoom(roomCode, callback) {
+    this.currentRoomCode = roomCode;
+    return this.subscribeToTopic(`/topic/room/${roomCode}`, callback);
+  }
 
-    // 개인 게임 메시지 구독
-    this.client.subscribe(`/user/topic/game/${gameId}`, (message) => {
-      console.log('개인 게임 메시지:', message.body);
-    });
+  // 메시지 전송 (범용)
+  sendMessage(destination, body) {
+    if (!this.client || !this.isConnected) {
+      console.error('WebSocket이 연결되지 않았습니다.');
+      return false;
+    }
 
-    // 채팅 메시지 구독
-    this.client.subscribe(`/topic/game/${gameId}/chat`, (message) => {
-      console.log('채팅 메시지:', message.body);
-    });
+    try {
+      const messageBody = typeof body === 'string' ? body : JSON.stringify(body);
+      
+      this.client.publish({
+        destination: destination,
+        body: messageBody
+      });
+      
+      console.log(`메시지 전송 [${destination}]:`, body);
+      return true;
+    } catch (error) {
+      console.error('메시지 전송 실패:', error);
+      return false;
+    }
   }
 
   // 방 참여
   joinRoom(roomCode) {
-    if (!this.client || !this.isConnected) {
-      console.error('WebSocket이 연결되지 않았습니다.');
-      return;
-    }
-
-    this.client.publish({
-      destination: '/app/room/join',
-      body: JSON.stringify({ roomCode: parseInt(roomCode) })
+    return this.sendMessage('/app/room/join', { 
+      roomCode: parseInt(roomCode) 
     });
-    console.log('방 참여 요청 전송:', roomCode);
   }
 
   // 방 나가기
   leaveRoom() {
-    if (!this.client || !this.isConnected) {
-      console.error('WebSocket이 연결되지 않았습니다.');
-      return;
+    const success = this.sendMessage('/app/room/leave', {});
+    
+    if (success) {
+      // 방 관련 구독 해제
+      if (this.currentRoomCode) {
+        this.unsubscribeFromTopic(`/topic/room/${this.currentRoomCode}`);
+        this.currentRoomCode = null;
+      }
     }
-
-    this.client.publish({
-      destination: '/app/room/leave',
-      body: JSON.stringify({})
-    });
-    console.log('방 나가기 요청 전송');
-
-    if (this.roomSubscription) {
-      this.roomSubscription.unsubscribe();
-      this.roomSubscription = null;
-    }
-    this.currentRoomCode = null;
+    
+    return success;
   }
 
   // 게임 시작
   startGame(roomCode) {
-    if (!this.client || !this.isConnected) {
-      console.error('WebSocket이 연결되지 않았습니다.');
-      return;
-    }
-
-    this.client.publish({
-      destination: '/app/game/start',
-      body: JSON.stringify({ roomCode: parseInt(roomCode) })
+    return this.sendMessage('/app/game/start', { 
+      roomCode: parseInt(roomCode) 
     });
-    console.log('게임 시작 요청 전송:', roomCode);
   }
 
   // 채팅 전송
   sendChat(gameId, message) {
-    if (!this.client || !this.isConnected || !gameId) {
-      console.error('채팅을 전송할 수 없습니다.');
-      return;
+    if (!gameId) {
+      console.error('gameId가 필요합니다.');
+      return false;
     }
+    
+    return this.sendMessage(`/app/game/${gameId}/chat`, message);
+  }
 
-    this.client.publish({
-      destination: `/app/game/${gameId}/chat`,
-      body: message
+  // 현재 연결 상태 확인 *** 이 메서드가 누락되어 있었습니다! ***
+  isWebSocketConnected() {
+    return this.isConnected && this.client && this.client.connected;
+  }
+
+  // 활성 구독 목록 조회
+  getActiveSubscriptions() {
+    return Array.from(this.subscriptions.keys());
+  }
+
+  // 레거시 메서드들 (하위 호환성)
+  subscribeToGame(gameId) {
+    console.warn('subscribeToGame은 deprecated입니다. subscribeToTopic을 사용하세요.');
+    // 기본적인 게임 구독만 처리
+    this.subscribeToTopic(`/topic/game/${gameId}`, (message) => {
+      console.log('게임 메시지 (레거시):', message);
     });
-    console.log('채팅 전송:', message);
   }
 }
 
