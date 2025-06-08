@@ -2,7 +2,7 @@ import React, { useRef, useEffect, useState } from 'react';
 import styles from './Canvas.module.css';
 import webSocketService from '../../utils/websocket';
 
-const Canvas = ({ isQuizMaster, answer, timePercent, gameId, turnInfo }) => {
+const Canvas = ({ isQuizMaster, answer, gameId, turnInfo }) => {
   const canvasRef = useRef(null);
   const ctxRef = useRef(null);
   const [isDrawing, setIsDrawing] = useState(false);
@@ -15,34 +15,71 @@ const Canvas = ({ isQuizMaster, answer, timePercent, gameId, turnInfo }) => {
     const canvas = canvasRef.current;
     if (!canvas) return;
     
-    // 캔버스 크기 설정
+    // 캔버스 크기 설정 함수
     const resizeCanvas = () => {
-      const rect = canvas.getBoundingClientRect();
+      const canvasWrapper = canvas.parentElement; // .canvasWrapper
+      if (!canvasWrapper) return;
+      
+      const wrapperRect = canvasWrapper.getBoundingClientRect();
       const dpr = window.devicePixelRatio || 1;
       
-      // 실제 표시 크기
-      canvas.style.width = rect.width + 'px';
-      canvas.style.height = rect.height + 'px';
+      // 가용 공간에 맞춰서 자유롭게 조정 (비율 고정 없음)
+      const availableWidth = wrapperRect.width;
+      const availableHeight = wrapperRect.height;
       
-      // 내부 해상도 (고해상도 지원)
-      canvas.width = rect.width * dpr;
-      canvas.height = rect.height * dpr;
+      // 가로/세로 독립적으로 조정
+      let canvasWidth = availableWidth * 1.0; // 가로 95% 사용
+      let canvasHeight = availableHeight * 1.05; // 세로 95% 사용 (90%에서 증가)
       
+      // 최소 크기만 제한
+      const minWidth = 300;
+      const minHeight = 200;
+      
+      canvasWidth = Math.max(minWidth, canvasWidth);
+      canvasHeight = Math.max(minHeight, canvasHeight);
+      
+      // 캔버스 스타일 크기 설정
+      canvas.style.width = `${canvasWidth}px`;
+      canvas.style.height = `${canvasHeight}px`;
+      
+      // 캔버스 내부 해상도 설정
+      canvas.width = canvasWidth * dpr;
+      canvas.height = canvasHeight * dpr;
+      
+      // 컨텍스트 설정
       const ctx = canvas.getContext('2d');
       ctx.scale(dpr, dpr);
       ctx.lineCap = 'round';
       ctxRef.current = ctx;
+      
+      // 배경 다시 그리기
       drawBackground();
+      
+      console.log('캔버스 크기 업데이트:', { 
+        availableWidth, 
+        availableHeight, 
+        canvasWidth, 
+        canvasHeight,
+        ratio: `${Math.round(canvasWidth/canvasHeight*100)/100}:1`
+      });
+    };
+
+    // 디바운싱된 리사이즈 함수
+    let resizeTimeout;
+    const debouncedResize = () => {
+      clearTimeout(resizeTimeout);
+      resizeTimeout = setTimeout(resizeCanvas, 100);
     };
 
     // 초기 설정
-    resizeCanvas();
+    setTimeout(resizeCanvas, 100); // 초기 렌더링 후 실행
     
     // 리사이즈 이벤트 리스너
-    window.addEventListener('resize', resizeCanvas);
+    window.addEventListener('resize', debouncedResize);
     
     return () => {
-      window.removeEventListener('resize', resizeCanvas);
+      window.removeEventListener('resize', debouncedResize);
+      clearTimeout(resizeTimeout);
     };
   }, []);
 
@@ -456,10 +493,6 @@ const Canvas = ({ isQuizMaster, answer, timePercent, gameId, turnInfo }) => {
             pointerEvents: isQuizMaster ? 'auto' : 'none'
           }}
         />
-      </div>
-      
-      <div className={styles.timeBarBg}>
-        <div className={styles.timeBar} style={{ width: `${timePercent}%` }} />
       </div>
     </div>
   );
