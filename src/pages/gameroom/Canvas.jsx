@@ -330,51 +330,52 @@ const Canvas = ({ isQuizMaster, answer, timePercent, gameId, turnInfo }) => {
       {/* 캔버스 카드 배경 */}
       <div className={styles.canvasCard}></div>
       
-      {/* 상단 반투명 도구 모음 - 출제자만 표시 */}
-      {isQuizMaster && (
-        <div className={styles.canvasToolbar}>
-          <div className={styles.toolGroup}>
-            <label className={styles.colorTool}>
-              <span>🎨</span>
-              <input 
-                type="color" 
-                value={color} 
-                onChange={e => setColor(e.target.value)}
-                className={styles.colorInput}
-              />
-            </label>
-            <label className={styles.brushTool}>
-              <span>✏️</span>
-              <input 
-                type="range" 
-                min="1" 
-                max="20" 
-                value={lineWidth} 
-                onChange={e => setLineWidth(Number(e.target.value))}
-                className={styles.rangeInput}
-              />
-              <span className={styles.lineWidthDisplay}>{lineWidth}px</span>
-            </label>
-          </div>
-          <div className={styles.actionGroup}>
-            <button 
-              onClick={handleUndo} 
-              disabled={history.length === 0}
-              className={styles.toolButton}
-            >
-              <span className={styles.buttonIcon}>↩️</span>
-              <span className={styles.buttonText}>되돌리기</span>
-            </button>
-            <button 
-              onClick={handleClear}
-              className={styles.toolButton}
-            >
-              <span className={styles.buttonIcon}>🗑️</span>
-              <span className={styles.buttonText}>지우기</span>
-            </button>
-          </div>
+      {/* 상단 반투명 도구 모음 - 모든 플레이어에게 표시 */}
+      <div className={styles.canvasToolbar}>
+        <div className={styles.toolGroup}>
+          <label className={styles.colorTool}>
+            <span>🎨</span>
+            <input 
+              type="color" 
+              value={color} 
+              onChange={e => setColor(e.target.value)}
+              className={styles.colorInput}
+              disabled={!isQuizMaster}
+            />
+          </label>
+          <label className={styles.brushTool}>
+            <span>✏️</span>
+            <input 
+              type="range" 
+              min="1" 
+              max="20" 
+              value={lineWidth} 
+              onChange={e => setLineWidth(Number(e.target.value))}
+              className={styles.rangeInput}
+              disabled={!isQuizMaster}
+            />
+            <span className={styles.lineWidthDisplay}>{lineWidth}px</span>
+          </label>
         </div>
-      )}
+        <div className={styles.actionGroup}>
+          <button 
+            onClick={handleUndo} 
+            disabled={history.length === 0 || !isQuizMaster}
+            className={styles.toolButton}
+          >
+            <span className={styles.buttonIcon}>↩️</span>
+            <span className={styles.buttonText}>되돌리기</span>
+          </button>
+          <button 
+            onClick={handleClear}
+            disabled={!isQuizMaster}
+            className={styles.toolButton}
+          >
+            <span className={styles.buttonIcon}>🗑️</span>
+            <span className={styles.buttonText}>지우기</span>
+          </button>
+        </div>
+      </div>
 
       {isQuizMaster && (
         <div className={styles.answerBox}>
@@ -395,11 +396,6 @@ const Canvas = ({ isQuizMaster, answer, timePercent, gameId, turnInfo }) => {
             pointerEvents: isQuizMaster ? 'auto' : 'none'
           }}
         />
-        {!isQuizMaster && (
-          <div className={styles.viewOnlyOverlay}>
-            <span>👀 다른 플레이어가 그리는 중...</span>
-          </div>
-        )}
       </div>
       
       <div className={styles.timeBarBg}>
