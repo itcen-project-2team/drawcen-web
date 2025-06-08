@@ -102,6 +102,29 @@ const GameRoom = () => {
     return currentUserRef.current.id === drawerId || currentUserRef.current.memberId === drawerId;
   }, []);
 
+  // 그림 데이터 처리 함수
+  const handleDrawMessage = useCallback((message) => {
+    console.log('🎨 그림 데이터 수신:', message);
+    
+    try {
+      if (message && message.type === 'DRAW' && message.data) {
+        console.log('✅ 올바른 DRAW 메시지 수신:', message.data);
+        
+        // Canvas 컴포넌트에 그림 데이터 전달
+        const drawEvent = new CustomEvent('drawReceived', {
+          detail: message.data
+        });
+        window.dispatchEvent(drawEvent);
+        console.log('📡 drawReceived 이벤트 발송 완료');
+        
+      } else {
+        console.warn('⚠️ 예상하지 못한 그림 메시지 형식:', message);
+      }
+    } catch (error) {
+      console.error('❌ 그림 데이터 처리 중 오류:', error, { message });
+    }
+  }, []);
+
   // 게임 종료 시 리소스 정리 함수 (handleGameMessage보다 먼저 정의)
   const cleanupGameResources = useCallback(() => {
     console.log('🧹 게임 리소스 정리 시작');
@@ -364,6 +387,7 @@ const GameRoom = () => {
                 webSocketService.unsubscribeFromTopic(`/topic/game/${gameId}`);
                 webSocketService.unsubscribeFromTopic(`/user/topic/game/${gameId}`);
                 webSocketService.unsubscribeFromTopic(`/topic/game/${gameId}/chat`);
+                webSocketService.unsubscribeFromTopic(`/topic/game/${gameId}/draw`);
                 webSocketService.unsubscribeFromTopic('/user/queue/errors');
                 webSocketService.disconnect();
                 console.log('✅ 게임 종료 - WebSocket 연결 해제 완료');
@@ -503,6 +527,11 @@ const GameRoom = () => {
         handleChatMessage(message);
       });
       
+      webSocketService.subscribeToTopic(`/topic/game/${gameId}/draw`, (message) => {
+        console.log('🎨 [/topic/game/draw] 메시지 수신:', message);
+        handleDrawMessage(message);
+      });
+      
       webSocketService.subscribeToTopic('/user/queue/errors', (message) => {
         console.log('🚨 [/user/queue/errors] 메시지 수신:', message);
         handleErrorMessage(message);
@@ -533,7 +562,7 @@ const GameRoom = () => {
         }]);
       }
     }
-  }, [gameId, connectionAttempts, maxRetryAttempts, handleGameMessage, handleChatMessage, handleErrorMessage]);
+  }, [gameId, connectionAttempts, maxRetryAttempts, handleGameMessage, handleChatMessage, handleErrorMessage, handleDrawMessage]);
 
   // WebSocket 연결 해제 함수 (useEffect보다 먼저 정의)
   const stompDisconnect = useCallback(async () => {
@@ -545,6 +574,7 @@ const GameRoom = () => {
         webSocketService.unsubscribeFromTopic(`/topic/game/${gameId}`);
         webSocketService.unsubscribeFromTopic(`/user/topic/game/${gameId}`);
         webSocketService.unsubscribeFromTopic(`/topic/game/${gameId}/chat`);
+        webSocketService.unsubscribeFromTopic(`/topic/game/${gameId}/draw`);
         webSocketService.unsubscribeFromTopic('/user/queue/errors');
         
         // 연결 해제
@@ -576,6 +606,7 @@ const GameRoom = () => {
           webSocketService.unsubscribeFromTopic(`/topic/game/${gameId}`);
           webSocketService.unsubscribeFromTopic(`/user/topic/game/${gameId}`);
           webSocketService.unsubscribeFromTopic(`/topic/game/${gameId}/chat`);
+          webSocketService.unsubscribeFromTopic(`/topic/game/${gameId}/draw`);
           webSocketService.unsubscribeFromTopic('/user/queue/errors');
           webSocketService.disconnect();
           console.log('✅ 페이지 이탈 시 WebSocket 정리 완료');

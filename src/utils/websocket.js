@@ -182,6 +182,43 @@ class WebSocketService {
     return this.sendMessage(`/app/game/${gameId}/chat`, message);
   }
 
+  // 그림 데이터 전송
+  sendDraw(gameId, drawData) {
+    console.log('🔗 WebSocket sendDraw 호출:', { gameId, drawData });
+
+    if (!gameId) {
+      console.error('❌ sendDraw: gameId가 필요합니다.');
+      return false;
+    }
+    
+    if (!this.client || !this.isConnected) {
+      console.error('❌ sendDraw: WebSocket이 연결되지 않았습니다.', {
+        hasClient: !!this.client,
+        isConnected: this.isConnected
+      });
+      return false;
+    }
+
+    if (!drawData.turnId) {
+      console.error('❌ sendDraw: turnId가 필요합니다.', drawData);
+      return false;
+    }
+
+    // 지우기 명령이 아닌 경우 points 체크
+    if (drawData.color !== "CLEAR_CANVAS" && (!drawData.points || drawData.points.length === 0)) {
+      console.error('❌ sendDraw: 그림 데이터가 유효하지 않습니다:', drawData);
+      return false;
+    }
+    
+    const destination = `/app/game/${gameId}/draw`;
+    console.log('📤 그림 데이터 전송:', { destination, drawData });
+    
+    const result = this.sendMessage(destination, drawData);
+    console.log('📤 sendDraw 결과:', result ? '✅ 성공' : '❌ 실패');
+    
+    return result;
+  }
+
   // 현재 연결 상태 확인 *** 이 메서드가 누락되어 있었습니다! ***
   isWebSocketConnected() {
     return this.isConnected && this.client && this.client.connected;
