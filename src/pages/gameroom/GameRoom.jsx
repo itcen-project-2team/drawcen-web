@@ -4,6 +4,7 @@ import Background from "../../components/background/Background";
 import PlayerList from "./PlayerList";
 import Canvas from "./Canvas";
 import ChatBox from "./ChatBox";
+import RankingModal from "../../components/modal/RankingModal";
 import styles from "./GameRoom.module.css";
 import logo from "../../assets/logo.png";
 import avatar from "../../assets/default-avatar.png";
@@ -50,6 +51,10 @@ const GameRoom = () => {
 
   // 중복 메시지 방지를 위한 최근 메시지 추적
   const [recentMessages, setRecentMessages] = useState(new Set());
+
+  // 랭킹 모달 상태
+  const [showRankingModal, setShowRankingModal] = useState(false);
+  const [gameRankings, setGameRankings] = useState([]);
 
   // ref를 항상 최신 상태로 동기화
   useEffect(() => {
@@ -360,6 +365,19 @@ const GameRoom = () => {
             return player;
           }));
           
+          // 랭킹 데이터 준비 (players의 닉네임과 members의 점수 결합)
+          const rankings = gameFinishMembers.map(member => {
+            const player = playersRef.current.find(p => p.id === member.memberId);
+            return {
+              memberId: member.memberId,
+              nickname: player ? player.nickname : `참가자 ${member.memberId}`,
+              score: member.score
+            };
+          });
+          
+          setGameRankings(rankings);
+          setShowRankingModal(true);
+          
           // 우승자 계산
           const sortedPlayers = gameFinishMembers.sort((a, b) => b.score - a.score);
           const winner = sortedPlayers[0];
@@ -375,36 +393,6 @@ const GameRoom = () => {
           }]);
           
           console.log('🏆 우승자:', winnerName, '점수:', winner?.score);
-          
-          // 3초 후 정리 및 메인 페이지 이동
-          setTimeout(async () => {
-            console.log('🔄 메인 페이지 이동 준비');
-            
-            // WebSocket 연결 해제
-            try {
-              if (webSocketService.isWebSocketConnected()) {
-                console.log('🔌 게임 종료 - WebSocket 연결 해제 시작');
-                webSocketService.unsubscribeFromTopic(`/topic/game/${gameId}`);
-                webSocketService.unsubscribeFromTopic(`/user/topic/game/${gameId}`);
-                webSocketService.unsubscribeFromTopic(`/topic/game/${gameId}/chat`);
-                webSocketService.unsubscribeFromTopic(`/topic/game/${gameId}/draw`);
-                webSocketService.unsubscribeFromTopic('/user/queue/errors');
-                webSocketService.disconnect();
-                console.log('✅ 게임 종료 - WebSocket 연결 해제 완료');
-              }
-              setIsWebSocketConnected(false);
-              setConnectionAttempts(0);
-            } catch (error) {
-              console.error('❌ WebSocket 연결 해제 중 오류:', error);
-            }
-            
-            // 게임 상태 정리
-            cleanupGameResources();
-            
-            // 메인 페이지로 이동
-            console.log('🏠 메인 페이지로 이동');
-            navigate('/main');
-          }, 3000);
           break;
 
         default:
@@ -471,6 +459,38 @@ const GameRoom = () => {
       console.error('채팅 전송 실패:', error);
     }
   }, [gameId]);
+
+  // 랭킹 모달 닫기 핸들러
+  const handleCloseRankingModal = useCallback(async () => {
+    setShowRankingModal(false);
+    
+    console.log('🔄 메인 페이지 이동 준비');
+    
+    // WebSocket 연결 해제
+    try {
+      if (webSocketService.isWebSocketConnected()) {
+        console.log('🔌 게임 종료 - WebSocket 연결 해제 시작');
+        webSocketService.unsubscribeFromTopic(`/topic/game/${gameId}`);
+        webSocketService.unsubscribeFromTopic(`/user/topic/game/${gameId}`);
+        webSocketService.unsubscribeFromTopic(`/topic/game/${gameId}/chat`);
+        webSocketService.unsubscribeFromTopic(`/topic/game/${gameId}/draw`);
+        webSocketService.unsubscribeFromTopic('/user/queue/errors');
+        webSocketService.disconnect();
+        console.log('✅ 게임 종료 - WebSocket 연결 해제 완료');
+      }
+      setIsWebSocketConnected(false);
+      setConnectionAttempts(0);
+    } catch (error) {
+      console.error('❌ WebSocket 연결 해제 중 오류:', error);
+    }
+    
+    // 게임 상태 정리
+    cleanupGameResources();
+    
+    // 메인 페이지로 이동
+    console.log('🏠 메인 페이지로 이동');
+    navigate('/main');
+  }, [gameId, navigate, cleanupGameResources]);
 
   // 컴포넌트 마운트 시 초기 설정
   useEffect(() => {
@@ -760,6 +780,14 @@ const GameRoom = () => {
           </div>
         </div>
       </div>
+      
+      {/* 랭킹 모달 */}
+      <RankingModal 
+        isOpen={showRankingModal}
+        onClose={handleCloseRankingModal}
+        rankings={gameRankings}
+        gameId={gameId}
+      />
     </Background>
   );
 };
