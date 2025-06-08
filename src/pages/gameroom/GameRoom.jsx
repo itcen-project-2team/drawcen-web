@@ -734,26 +734,9 @@ const GameRoom = () => {
             <img src={logo} alt="DrawCen" />
           </div>
           <div className={styles.roomCode}>
-            방번호: {currentRoomCode || roomCode || '로딩중...'}
+            room code: {currentRoomCode || roomCode || '로딩중...'}
           </div>
-          <div className={styles.connectionStatus}>
-            <span className={`${styles.statusIndicator} ${isWebSocketConnected ? styles.connected : styles.disconnected}`}>
-              {isWebSocketConnected ? '🟢 연결됨' : '🔴 연결끊김'}
-            </span>
-            {!isWebSocketConnected && connectionAttempts > 0 && (
-              <span className={styles.retryInfo}>
-                재연결 시도: {connectionAttempts}/{maxRetryAttempts}
-              </span>
-            )}
-          </div>
-          {turnInfo.startTime && (
-            <div className={styles.timerDisplay}>
-              <span className={styles.timerLabel}>남은 시간:</span>
-              <span className={styles.timerValue}>
-                {Math.floor(remainingSeconds / 60)}:{(remainingSeconds % 60).toString().padStart(2, '0')}
-              </span>
-            </div>
-          )}
+          
         </div>
 
         <div className={styles.gameContent}>
