@@ -204,8 +204,8 @@ class WebSocketService {
       return false;
     }
 
-    // 지우기 명령이 아닌 경우 points 체크
-    if (drawData.color !== "CLEAR_CANVAS" && (!drawData.points || drawData.points.length === 0)) {
+    // 지우기나 되돌리기 명령이 아닌 경우 points 체크
+    if (drawData.color !== "CLEAR_CANVAS" && drawData.color !== "UNDO_CANVAS" && (!drawData.points || drawData.points.length === 0)) {
       console.error('❌ sendDraw: 그림 데이터가 유효하지 않습니다:', drawData);
       return false;
     }

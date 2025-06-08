@@ -46,6 +46,25 @@ const Canvas = ({ isQuizMaster, answer, timePercent, gameId, turnInfo }) => {
     };
   }, []);
 
+  // 턴이 바뀔 때마다 캔버스 초기화
+  useEffect(() => {
+    if (!turnInfo?.turnId) return;
+    
+    console.log('🔄 새로운 턴 시작 - 캔버스 초기화:', turnInfo.turnId);
+    
+    const canvas = canvasRef.current;
+    const ctx = ctxRef.current;
+    
+    if (canvas && ctx) {
+      const rect = canvas.getBoundingClientRect();
+      ctx.clearRect(0, 0, rect.width, rect.height);
+      drawBackground();
+      setHistory([]);
+      setCurrentStroke([]);
+      setIsDrawing(false);
+    }
+  }, [turnInfo?.turnId]);
+
   // 다른 사용자의 그림 데이터를 받아서 처리하는 이벤트 리스너
   useEffect(() => {
     const handleDrawReceived = (event) => {
@@ -57,6 +76,9 @@ const Canvas = ({ isQuizMaster, answer, timePercent, gameId, turnInfo }) => {
         drawReceivedStroke(drawData);
       } else if (drawData && drawData.color === "CLEAR_CANVAS") {
         console.log('🗑️ 지우기 명령 수신');
+        drawReceivedStroke(drawData);
+      } else if (drawData && drawData.color === "UNDO_CANVAS") {
+        console.log('↩️ 되돌리기 명령 수신');
         drawReceivedStroke(drawData);
       } else {
         console.warn('⚠️ 유효하지 않은 그림 데이터:', drawData);
@@ -88,6 +110,20 @@ const Canvas = ({ isQuizMaster, answer, timePercent, gameId, turnInfo }) => {
       return;
     }
 
+    // 되돌리기 명령 처리
+    if (drawData.color === "UNDO_CANVAS") {
+      console.log('↩️ 다른 사용자가 되돌리기');
+      setHistory(prevHistory => {
+        if (prevHistory.length > 0) {
+          const newHistory = prevHistory.slice(0, -1);
+          redrawCanvas(newHistory);
+          return newHistory;
+        }
+        return prevHistory;
+      });
+      return;
+    }
+
     if (!drawData.points || drawData.points.length < 2) return;
 
     const rect = canvas.getBoundingClientRect();
@@ -99,7 +135,9 @@ const Canvas = ({ isQuizMaster, answer, timePercent, gameId, turnInfo }) => {
     // 스케일링된 좌표를 상대 좌표로 변환 후 절대 좌표로 변환
     const absolutePoints = drawData.points.map(point => ({
       x: (point.x / 10000) * rect.width,
-      y: (point.y / 10000) * rect.height
+      y: (point.y / 10000) * rect.height,
+      color: drawData.color || '#000000',
+      lineWidth: drawData.width || 2
     }));
     
     // 첫 번째 점으로 이동
@@ -112,6 +150,9 @@ const Canvas = ({ isQuizMaster, answer, timePercent, gameId, turnInfo }) => {
     
     ctx.stroke();
     ctx.closePath();
+
+    // 다른 플레이어의 스트로크도 history에 추가
+    setHistory(prevHistory => [...prevHistory, absolutePoints]);
 
     console.log('🎨 그림 그리기 완료 (좌표 변환):', {
       originalPoints: drawData.points.slice(0, 2),
@@ -186,6 +227,24 @@ const Canvas = ({ isQuizMaster, answer, timePercent, gameId, turnInfo }) => {
 
     console.log('🗑️ 캔버스 지우기 전송:', clearData);
     webSocketService.sendDraw(gameId, clearData);
+  };
+
+  // 되돌리기를 서버로 전송하는 함수
+  const sendUndo = () => {
+    if (!gameId || !turnInfo?.turnId || !isQuizMaster) {
+      return;
+    }
+
+    // 되돌리기는 특별한 DrawDto로 전송
+    const undoData = {
+      turnId: turnInfo.turnId,
+      color: "UNDO_CANVAS", // 특별한 색상 코드로 되돌리기 신호
+      width: 0,
+      points: []
+    };
+
+    console.log('↩️ 되돌리기 전송:', undoData);
+    webSocketService.sendDraw(gameId, undoData);
   };
 
   const drawBackground = () => {
@@ -311,6 +370,7 @@ const Canvas = ({ isQuizMaster, answer, timePercent, gameId, turnInfo }) => {
     const newHistory = history.slice(0, -1);
     setHistory(newHistory);
     redrawCanvas(newHistory);
+    sendUndo(); // 서버로 되돌리기 명령 전송
   };
 
   const handleClear = () => {
