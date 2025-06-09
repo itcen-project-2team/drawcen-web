@@ -253,27 +253,54 @@ const GameRoom = () => {
           break;
 
         case 'CHAT':
-          if (typeof data !== 'string') {
-            console.error('❌ CHAT 데이터가 문자열이 아닙니다:', data);
+          // 새로운 채팅 JSON 구조 처리: { message, memberId, nickName }
+          if (!data || typeof data !== 'object') {
+            console.error('❌ CHAT 데이터가 객체가 아닙니다:', data);
+            return;
+          }
+
+          const { message: chatMessage, memberId: senderId, nickName: senderNickname } = data;
+          
+          if (!chatMessage || typeof chatMessage !== 'string') {
+            console.error('❌ CHAT 데이터에 유효한 메시지가 없습니다:', data);
             return;
           }
 
           // 정답 메시지인지 확인 (CORRECT 타입으로 따로 처리되므로 CHAT에서는 무시)
           const correctMessagePattern = /님이 정답을 맞추셨습니다|정답입니다|맞추셨습니다/;
-          if (correctMessagePattern.test(data)) {
+          if (correctMessagePattern.test(chatMessage)) {
             console.log('💡 정답 메시지는 CORRECT 타입으로 별도 처리되므로 CHAT에서 무시');
             return;
           }
 
           // 중복 메시지 확인
-          if (isDuplicateMessage(data, 'chat')) {
+          if (isDuplicateMessage(chatMessage, 'chat')) {
             return;
           }
 
+          // 닉네임 결정 (우선순위: senderNickname > 플레이어 목록에서 찾기 > 기본값)
+          let finalNickname = senderNickname || '익명';
+          
+          if (!senderNickname && senderId) {
+            const sender = playersRef.current.find(player => 
+              player.id === senderId || String(player.id) === String(senderId)
+            );
+            if (sender) {
+              finalNickname = sender.nickname;
+            }
+          }
+
+          console.log('�� 채팅 메시지 최종 처리:', {
+            message: chatMessage,
+            senderId,
+            nickname: finalNickname
+          });
+          
           setMessages(prev => [...prev, {
             id: Date.now(),
             type: 'chat',
-            message: data,
+            message: chatMessage,
+            nickname: finalNickname,
             timestamp: new Date()
           }]);
           break;
@@ -426,17 +453,41 @@ const GameRoom = () => {
     console.log('💬 채팅 전용 메시지 수신:', message);
     
     try {
-      if (message && message.type === 'CHAT' && typeof message.data === 'string') {
-        // 서버로부터 닉네임 정보를 받거나, 현재 사용자의 닉네임 사용
-        const nickname = message.nickname || currentUserRef.current?.nickname || currentUserRef.current?.id || '익명';
+      if (message && message.type === 'CHAT' && message.data && typeof message.data === 'object') {
+        const { message: chatMessage, memberId: senderId, nickName: senderNickname } = message.data;
+        
+        if (!chatMessage || typeof chatMessage !== 'string') {
+          console.error('❌ 채팅 데이터에 유효한 메시지가 없습니다:', message.data);
+          return;
+        }
+
+        // 닉네임 결정 (우선순위: senderNickname > 플레이어 목록에서 찾기 > 기본값)
+        let finalNickname = senderNickname || '익명';
+        
+        if (!senderNickname && senderId) {
+          const sender = playersRef.current.find(player => 
+            player.id === senderId || String(player.id) === String(senderId)
+          );
+          if (sender) {
+            finalNickname = sender.nickname;
+          }
+        }
+
+        console.log('💬 채팅 메시지 최종 처리:', {
+          message: chatMessage,
+          senderId,
+          nickname: finalNickname
+        });
         
         setMessages(prev => [...prev, {
           id: Date.now(),
           type: 'chat',
-          message: message.data,
-          nickname: nickname,
+          message: chatMessage,
+          nickname: finalNickname,
           timestamp: new Date()
         }]);
+      } else {
+        console.warn('⚠️ 예상하지 못한 채팅 메시지 형식:', message);
       }
     } catch (error) {
       console.error('❌ 채팅 메시지 처리 중 오류:', error);

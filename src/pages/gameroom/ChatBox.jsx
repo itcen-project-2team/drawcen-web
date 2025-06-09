@@ -56,7 +56,7 @@ const ChatBox = ({ messages, onSendMessage, currentUser }) => {
       default:
         return {
           className: `${styles.message} ${styles.chatMessage}`,
-          showNickname: false,
+          showNickname: true,
           content: msg.message
         };
     }
