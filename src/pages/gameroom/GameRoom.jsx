@@ -5,6 +5,7 @@ import PlayerList from "./PlayerList";
 import Canvas from "./Canvas";
 import ChatBox from "./ChatBox";
 import RankingModal from "../../components/modal/RankingModal";
+import StartAnimation from "../../components/animation/StartAnimation";
 import styles from "./GameRoom.module.css";
 import logo from "../../assets/logo.png";
 import { getUserProfileImage } from "../../utils/profileImages";
@@ -55,6 +56,9 @@ const GameRoom = () => {
   // 랭킹 모달 상태
   const [showRankingModal, setShowRankingModal] = useState(false);
   const [gameRankings, setGameRankings] = useState([]);
+
+  // 게임 시작 애니메이션 상태
+  const [showStartAnimation, setShowStartAnimation] = useState(false);
 
   // ref를 항상 최신 상태로 동기화
   useEffect(() => {
@@ -193,6 +197,9 @@ const GameRoom = () => {
           }
 
           console.log('🎯 새 턴 시작:', { turnId, drawerId, startTime, endTime });
+          
+          // START 애니메이션 트리거
+          setShowStartAnimation(true);
           
           console.log('🎯 turnInfo 설정 전:', turnInfo);
           setTurnInfo({ turnId, drawerId, startTime, endTime });
@@ -795,6 +802,12 @@ const GameRoom = () => {
     };
   }, [turnInfo.startTime, turnInfo.endTime]);
 
+  // 게임 시작 애니메이션 완료 콜백
+  const handleStartAnimationComplete = useCallback(() => {
+    setShowStartAnimation(false);
+    console.log('🎬 START 애니메이션 완료');
+  }, []);
+
   return (
     <Background>
       <div className={styles.gameRoom}>
@@ -840,6 +853,11 @@ const GameRoom = () => {
         rankings={gameRankings}
         gameId={gameId}
       />
+      
+      {/* 게임 시작 애니메이션 */}
+      {showStartAnimation && (
+        <StartAnimation onAnimationComplete={handleStartAnimationComplete} />
+      )}
     </Background>
   );
 };
