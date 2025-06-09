@@ -63,3 +63,25 @@ export const logout = async () => {
     return null;
   }
 };
+
+// 랜덤 닉네임 조회
+export const getRandomNickname = async () => {
+  try {
+    const response = await api.get("/api/member/nickname");
+    return response.data;
+  } catch (error) {
+    handleApiError(error);
+    return null;
+  }
+};
+
+// 닉네임 수정
+export const updateNickname = async (nickname) => {
+  try {
+    const response = await api.patch("/api/member/nickname", { nickname });
+    return response.data;
+  } catch (error) {
+    handleApiError(error);
+    return null;
+  }
+};

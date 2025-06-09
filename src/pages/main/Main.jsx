@@ -10,13 +10,13 @@ import logo from '../../assets/logo.png';
 import pink from '../../assets/pink.png';
 import editIcon from '../../assets/edit-icon.png';
 import useUserStore from '../../stores/userStore';
-import { checkLogIn, logout, getCurrentRoom } from '../../services/userService';
+import { checkLogIn, logout, getCurrentRoom, getRandomNickname, updateNickname } from '../../services/userService';
 import { createRoom } from '../../services/roomService';
 import webSocketService from '../../utils/websocket';
 
 const Main = () => {
   const navigate = useNavigate();
-  const { deleteUser, user, isLoggedIn, setUser } = useUserStore();
+  const { deleteUser, user, isLoggedIn, setUser, updateUser } = useUserStore();
   const [isProfileModalOpen, setIsProfileModalOpen] = useState(false);
   const [isNicknameModalOpen, setIsNicknameModalOpen] = useState(false);
   const [isRoomCodeModalOpen, setIsRoomCodeModalOpen] = useState(false);
@@ -25,6 +25,10 @@ const Main = () => {
   const [currentRoomCode, setCurrentRoomCode] = useState(null);
   const [participants, setParticipants] = useState([]);
   const [isCheckingLogin, setIsCheckingLogin] = useState(true);
+  
+  // 닉네임 관련 상태 추가
+  const [isNicknameLoading, setIsNicknameLoading] = useState(false);
+  const [currentNickname, setCurrentNickname] = useState('');
 
   // 페이지 로드 시 로그인 상태 체크
   useEffect(() => {
@@ -181,6 +185,9 @@ const Main = () => {
     setIsProfileModalOpen(false);
     setIsNicknameModalOpen(false);
     setIsRoomCodeModalOpen(false);
+    
+    // 닉네임 모달 상태 초기화
+    setCurrentNickname('');
   };
 
   const handleTeamCodeInput = () => {
@@ -189,11 +196,61 @@ const Main = () => {
 
   const handleEditProfile = () => {
     setIsProfileModalOpen(false);
+    setCurrentNickname(user?.nickname || ''); // 현재 닉네임을 설정
     setIsNicknameModalOpen(true);
   };
 
-  const handleNicknameChange = () => {
-    // TODO: 닉네임 변경 로직 구현
+  // 닉네임 텍스트 클릭 시 직접 입력
+  const handleNicknameTextClick = () => {
+    const newNickname = prompt('새 닉네임을 입력하세요:', currentNickname || user?.nickname || '');
+    if (newNickname !== null && newNickname.trim()) {
+      setCurrentNickname(newNickname.trim());
+    }
+  };
+
+  // 랜덤 닉네임 생성
+  const handleGenerateNickname = async () => {
+    setIsNicknameLoading(true);
+    try {
+      const nicknameData = await getRandomNickname();
+      if (nicknameData && nicknameData.nickname) {
+        setCurrentNickname(nicknameData.nickname);
+      } else {
+        console.error('닉네임 생성에 실패했습니다.');
+      }
+    } catch (error) {
+      console.error('닉네임 생성 중 오류:', error);
+    } finally {
+      setIsNicknameLoading(false);
+    }
+  };
+
+  // 닉네임 수정
+  const handleNicknameChange = async () => {
+    const trimmedNickname = currentNickname.trim();
+    if (!trimmedNickname) {
+      console.error('닉네임이 비어있습니다.');
+      return;
+    }
+
+    setIsNicknameLoading(true);
+    try {
+      const result = await updateNickname(trimmedNickname);
+      if (result) {
+        // 성공적으로 수정되면 전역 상태와 로컬스토리지 업데이트
+        updateUser({ nickname: trimmedNickname });
+        setIsNicknameModalOpen(false);
+        setCurrentNickname('');
+        // 성공 시에만 간단한 알림
+        alert('닉네임이 변경되었습니다.');
+      } else {
+        console.error('닉네임 변경에 실패했습니다.');
+      }
+    } catch (error) {
+      console.error('닉네임 변경 중 오류:', error);
+    } finally {
+      setIsNicknameLoading(false);
+    }
   };
 
   const handleRoomCodeChange = (e) => {
@@ -367,11 +424,27 @@ const Main = () => {
       <Modal isOpen={isNicknameModalOpen} onClose={handleCloseModal}>
         <div className="nickname-modal">
           <div className="nickname-top-buttons">
-            <Button variant="outline" size="medium" shape="square">닉네임 생성</Button>
-            <span className="current-nickname-text">승준짱 승준짱</span>
+            <button 
+              className="nickname-type-button"
+              onClick={handleGenerateNickname}
+              disabled={isNicknameLoading}
+            >
+              {isNicknameLoading ? '생성 중...' : '닉네임 생성'}
+            </button>
+            <span 
+              className="current-nickname-text"
+              onClick={handleNicknameTextClick}
+            >
+              {currentNickname || user?.nickname || '승준짱 승준짱'}
+            </span>
           </div>
-          <Button variant="secondary" size="medium" onClick={handleNicknameChange}>
-            수정
+          <Button 
+            variant="secondary" 
+            size="medium" 
+            onClick={handleNicknameChange}
+            disabled={isNicknameLoading || !currentNickname.trim()}
+          >
+            {isNicknameLoading ? '수정 중...' : '수정'}
           </Button>
         </div>
       </Modal>
@@ -396,15 +469,6 @@ const Main = () => {
               onChange={handleRoomCodeChange}
               onKeyDown={handleRoomCodeKeyPress}
               autoFocus
-              style={{
-                width: '100%',
-                padding: '12px',
-                fontSize: '18px',
-                textAlign: 'center',
-                border: '2px solid #ddd',
-                borderRadius: '8px',
-                outline: 'none'
-              }}
             />
           </div>
           <Button variant="secondary" size="medium" onClick={handleRoomEnter}>
