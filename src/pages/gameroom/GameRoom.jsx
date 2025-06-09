@@ -92,13 +92,22 @@ const GameRoom = () => {
 
   // 게임 참가자 데이터 변환 함수
   const convertGameParticipants = useCallback((gameParticipants) => {
-    return gameParticipants.map(participant => ({
-      id: participant.memberId,
-      nickname: participant.nickName || participant.memberName,
-      score: participant.score || 0,
-      avatar: getUserProfileImage(participant),
-      isDrawing: false
-    }));
+    return gameParticipants.map(participant => {
+      console.log('🔍 참가자 변환:', {
+        memberId: participant.memberId,
+        nickName: participant.nickName,
+        profileColor: participant.profileColor
+      });
+      
+      return {
+        id: participant.memberId,
+        nickname: participant.nickName || participant.memberName,
+        score: participant.score || 0,
+        avatar: getUserProfileImage(participant),
+        profileColor: participant.profileColor,
+        isDrawing: false
+      };
+    });
   }, []);
 
   // 현재 사용자가 출제자인지 확인 (ref 사용)
@@ -368,11 +377,19 @@ const GameRoom = () => {
           // 랭킹 데이터 준비 (players의 닉네임과 members의 점수 결합)
           const rankings = gameFinishMembers.map(member => {
             const player = playersRef.current.find(p => p.id === member.memberId);
+            console.log(`🏆 랭킹 데이터 생성 - ${member.memberId}:`, {
+              member: member,
+              player: player,
+              playerProfileColor: player?.profileColor,
+              memberProfileColor: member.profileColor,
+              finalProfileColor: player?.profileColor || member.profileColor || 'WHITE'
+            });
+            
             return {
               memberId: member.memberId,
               nickname: player ? player.nickname : `참가자 ${member.memberId}`,
               score: member.score,
-              profileColor: member.profileColor || player?.profileColor // 프로필 컬러 정보 포함
+              profileColor: player?.profileColor || member.profileColor || 'WHITE' // 플레이어 정보 우선
             };
           });
           
