@@ -7,8 +7,8 @@ import Button from '../../components/button/Button';
 import WaitingRoomModal from '../../components/room/WaitingRoomModal';
 import background from '../../assets/background.png';
 import logo from '../../assets/logo.png';
-import pink from '../../assets/pink.png';
 import editIcon from '../../assets/edit-icon.png';
+import { getUserProfileImage } from '../../utils/profileImages';
 import useUserStore from '../../stores/userStore';
 import { checkLogIn, logout, getCurrentRoom, getRandomNickname, updateNickname } from '../../services/userService';
 import { createRoom } from '../../services/roomService';
@@ -394,7 +394,7 @@ const Main = () => {
       </button>
       
       <div className="profile-container content-animate" onClick={handleProfileClick}>
-        <img src={pink} alt="Profile" className="profile-image" />
+        <img src={getUserProfileImage(user)} alt="Profile" className="profile-image" />
         <span className="profile-text">{user?.nickname || user?.id || '사용자'}</span>
       </div>
       <div className="main-content main-content-animate">
@@ -412,7 +412,7 @@ const Main = () => {
       {/* 프로필 모달 */}
       <Modal isOpen={isProfileModalOpen} onClose={handleCloseModal}>
         <div className="modal-profile">
-          <img src={pink} alt="Profile" className="modal-profile-image" />
+          <img src={getUserProfileImage(user)} alt="Profile" className="modal-profile-image" />
           <div className="modal-profile-info">
             <img src={editIcon} alt="Edit" className="edit-icon" onClick={handleEditProfile} />
             <span className="modal-profile-name">{user?.nickname || user?.id || '사용자'}</span>

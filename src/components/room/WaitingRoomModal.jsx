@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import './WaitingRoomModal.css';
 import Modal from '../modal/Modal';
 import Button from '../button/Button';
-import pink from '../../assets/pink.png';
+import { getUserProfileImage } from '../../utils/profileImages';
 
 const WaitingRoomModal = ({ 
   isOpen, 
@@ -79,7 +79,7 @@ const WaitingRoomModal = ({
                   <div className="participant-avatar">
                     <div className="participant-avatar-inner">
                       {participant ? (
-                        <img src={pink} alt="Profile" />
+                        <img src={getUserProfileImage(participant)} alt="Profile" />
                       ) : ''}
                     </div>
                   </div>

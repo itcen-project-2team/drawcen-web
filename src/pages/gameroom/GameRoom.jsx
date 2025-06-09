@@ -7,7 +7,7 @@ import ChatBox from "./ChatBox";
 import RankingModal from "../../components/modal/RankingModal";
 import styles from "./GameRoom.module.css";
 import logo from "../../assets/logo.png";
-import avatar from "../../assets/default-avatar.png";
+import { getUserProfileImage } from "../../utils/profileImages";
 import webSocketService from "../../utils/websocket";
 
 const GameRoom = () => {
@@ -96,7 +96,7 @@ const GameRoom = () => {
       id: participant.memberId,
       nickname: participant.nickName || participant.memberName,
       score: participant.score || 0,
-      avatar: avatar,
+      avatar: getUserProfileImage(participant),
       isDrawing: false
     }));
   }, []);
@@ -371,7 +371,8 @@ const GameRoom = () => {
             return {
               memberId: member.memberId,
               nickname: player ? player.nickname : `참가자 ${member.memberId}`,
-              score: member.score
+              score: member.score,
+              profileColor: member.profileColor || player?.profileColor // 프로필 컬러 정보 포함
             };
           });
           

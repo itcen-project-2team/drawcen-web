@@ -1,6 +1,6 @@
 import React from 'react';
 import styles from './RankingModal.module.css';
-import avatar from '../../assets/default-avatar.png';
+import { getUserProfileImage } from '../../utils/profileImages';
 
 const RankingModal = ({ isOpen, onClose, rankings, gameId }) => {
   if (!isOpen) return null;
@@ -67,7 +67,7 @@ const RankingModal = ({ isOpen, onClose, rankings, gameId }) => {
                 </div>
                 <div className={styles.playerInfo}>
                   <img 
-                    src={player.avatar || avatar} 
+                    src={getUserProfileImage(player)} 
                     alt="avatar" 
                     className={styles.playerAvatar}
                   />
