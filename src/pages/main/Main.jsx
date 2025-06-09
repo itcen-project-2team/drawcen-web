@@ -216,11 +216,10 @@ const Main = () => {
       if (nicknameData && nicknameData.nickname) {
         setCurrentNickname(nicknameData.nickname);
       } else {
-        alert('닉네임 생성에 실패했습니다.');
+        console.error('닉네임 생성에 실패했습니다.');
       }
     } catch (error) {
       console.error('닉네임 생성 중 오류:', error);
-      alert('닉네임 생성에 실패했습니다.');
     } finally {
       setIsNicknameLoading(false);
     }
@@ -230,7 +229,7 @@ const Main = () => {
   const handleNicknameChange = async () => {
     const trimmedNickname = currentNickname.trim();
     if (!trimmedNickname) {
-      alert('닉네임을 입력해주세요.');
+      console.error('닉네임이 비어있습니다.');
       return;
     }
 
@@ -242,13 +241,13 @@ const Main = () => {
         updateUser({ nickname: trimmedNickname });
         setIsNicknameModalOpen(false);
         setCurrentNickname('');
-        alert('닉네임이 성공적으로 변경되었습니다.');
+        // 성공 시에만 간단한 알림
+        alert('닉네임이 변경되었습니다.');
       } else {
-        alert('닉네임 변경에 실패했습니다.');
+        console.error('닉네임 변경에 실패했습니다.');
       }
     } catch (error) {
       console.error('닉네임 변경 중 오류:', error);
-      alert('닉네임 변경에 실패했습니다.');
     } finally {
       setIsNicknameLoading(false);
     }
