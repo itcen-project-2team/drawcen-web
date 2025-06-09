@@ -89,9 +89,6 @@ const ChatBox = ({ messages, onSendMessage, currentUser }) => {
                   <span className={styles.nickname}>
                     {msg.nickname || '익명'}
                   </span>
-                  <span className={styles.timestamp}>
-                    {formatTime(msg.timestamp)}
-                  </span>
                 </div>
               )}
               <div className={styles.messageContent}>
