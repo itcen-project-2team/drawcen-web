@@ -216,7 +216,7 @@ canvas {
   position: absolute;
   left: 20px;
   right: 20px;
-  bottom: 20px;
+  bottom: 10px;
   height: 8px;
   background: rgba(224, 224, 224, 0.6);
   border-radius: 5px;

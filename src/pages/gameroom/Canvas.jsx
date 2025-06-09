@@ -2,7 +2,7 @@ import React, { useRef, useEffect, useState } from 'react';
 import styles from './Canvas.module.css';
 import webSocketService from '../../utils/websocket';
 
-const Canvas = ({ isQuizMaster, answer, gameId, turnInfo }) => {
+const Canvas = ({ isQuizMaster, answer, gameId, turnInfo, timePercent }) => {
   const canvasRef = useRef(null);
   const ctxRef = useRef(null);
   const [isDrawing, setIsDrawing] = useState(false);
@@ -492,6 +492,14 @@ const Canvas = ({ isQuizMaster, answer, gameId, turnInfo }) => {
             cursor: isQuizMaster ? 'crosshair' : 'default',
             pointerEvents: isQuizMaster ? 'auto' : 'none'
           }}
+        />
+      </div>
+
+      {/* 원래 타이머 바 */}
+      <div className={styles.timeBarBg}>
+        <div 
+          className={styles.timeBar} 
+          style={{ width: `${timePercent || 0}%` }}
         />
       </div>
     </div>
