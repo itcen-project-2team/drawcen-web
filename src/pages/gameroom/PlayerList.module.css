@@ -8,6 +8,7 @@
   padding: 0;
   overflow: hidden;
 }
+
 .playerItem {
   display: flex;
   align-items: center;
@@ -21,11 +22,13 @@
   position: relative;
   box-sizing: border-box;
 }
+
 .playerItem.drawing {
   background: rgba(25, 118, 210, 0.1);
   border-left: 4px solid #1976d2;
   animation: drawingPulse 2s ease-in-out infinite;
 }
+
 @keyframes drawingPulse {
   0%, 100% {
     background: rgba(25, 118, 210, 0.1);
@@ -34,28 +37,43 @@
     background: rgba(25, 118, 210, 0.2);
   }
 }
+
 .playerItem:last-child {
   border-bottom: none;
 }
-.avatar, .emptyAvatar {
+
+.avatar {
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  background: linear-gradient(180deg, #CF83FF, #45D3FF);
+  padding: 2px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  object-fit: cover;
+}
+
+.emptyAvatar {
   width: 48px;
   height: 48px;
   border-radius: 50%;
   background: #f0f0f0;
-  object-fit: cover;
-  display: block;
+  border: 2px dashed #ddd;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   flex-shrink: 0;
 }
-.emptyAvatar {
-  border: 2px dashed #ddd;
-  background: transparent;
-}
+
 .playerInfo {
   flex: 1;
   display: flex;
   flex-direction: column;
   gap: 4px;
 }
+
 .nickname {
   font-weight: bold;
   font-size: 1.1rem;
@@ -64,11 +82,13 @@
   align-items: center;
   gap: 8px;
 }
+
 .drawingIndicator {
   font-size: 16px;
   animation: pencilMove 1.5s ease-in-out infinite;
   display: inline-block;
 }
+
 @keyframes pencilMove {
   0%, 100% {
     transform: translateX(0) rotate(0deg);
@@ -83,13 +103,16 @@
     transform: translateX(2px) rotate(3deg);
   }
 }
+
 .score {
   color: #1976d2;
   font-size: 0.95rem;
 }
+
 .placeholder {
   opacity: 0.45;
 }
+
 .placeholder .nickname,
 .placeholder .score {
   color: #bbb;

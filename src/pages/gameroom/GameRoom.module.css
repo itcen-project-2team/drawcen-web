@@ -69,13 +69,42 @@
 .roomCode {
   flex: 1;
   display: flex;
-  justify-content: flex-end;
+  justify-content: center;
   align-items: center;
-  padding-right: 60px;
   font-size: 24px;
   font-weight: 700;
   color: #ffffff;
   text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+}
+
+/* 타이머 표시 스타일 */
+.timerDisplay {
+  width: 280px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 8px;
+  background: rgba(0, 0, 0, 0.4);
+  border-radius: 12px;
+  padding: 12px 24px;
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.timerLabel {
+  font-size: 16px;
+  font-weight: 500;
+  color: #ffffff;
+  opacity: 0.8;
+}
+
+.timerValue {
+  font-size: 28px;
+  font-weight: 700;
+  color: #45D3FF;
+  text-shadow: 0 0 10px rgba(69, 211, 255, 0.5);
+  font-family: 'Courier New', monospace;
+  letter-spacing: 2px;
 }
 
 /* 게임 콘텐츠 영역 */

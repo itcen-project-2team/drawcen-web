@@ -1,7 +1,8 @@
 import React, { useRef, useEffect, useState } from 'react';
 import styles from './Canvas.module.css';
+import webSocketService from '../../utils/websocket';
 
-const Canvas = ({ isQuizMaster, answer, timePercent }) => {
+const Canvas = ({ isQuizMaster, answer, gameId, turnInfo }) => {
   const canvasRef = useRef(null);
   const ctxRef = useRef(null);
   const [isDrawing, setIsDrawing] = useState(false);
@@ -12,18 +13,283 @@ const Canvas = ({ isQuizMaster, answer, timePercent }) => {
 
   useEffect(() => {
     const canvas = canvasRef.current;
-    canvas.width = canvas.offsetWidth;
-    canvas.height = canvas.offsetHeight;
-    const ctx = canvas.getContext('2d');
-    ctx.lineCap = 'round';
-    ctxRef.current = ctx;
-    drawBackground();
+    if (!canvas) return;
+    
+    // 캔버스 크기 설정 함수
+    const resizeCanvas = () => {
+      const canvasWrapper = canvas.parentElement; // .canvasWrapper
+      if (!canvasWrapper) return;
+      
+      const wrapperRect = canvasWrapper.getBoundingClientRect();
+      const dpr = window.devicePixelRatio || 1;
+      
+      // 가용 공간에 맞춰서 자유롭게 조정 (비율 고정 없음)
+      const availableWidth = wrapperRect.width;
+      const availableHeight = wrapperRect.height;
+      
+      // 가로/세로 독립적으로 조정
+      let canvasWidth = availableWidth * 1.0; // 가로 95% 사용
+      let canvasHeight = availableHeight * 1.05; // 세로 95% 사용 (90%에서 증가)
+      
+      // 최소 크기만 제한
+      const minWidth = 300;
+      const minHeight = 200;
+      
+      canvasWidth = Math.max(minWidth, canvasWidth);
+      canvasHeight = Math.max(minHeight, canvasHeight);
+      
+      // 캔버스 스타일 크기 설정
+      canvas.style.width = `${canvasWidth}px`;
+      canvas.style.height = `${canvasHeight}px`;
+      
+      // 캔버스 내부 해상도 설정
+      canvas.width = canvasWidth * dpr;
+      canvas.height = canvasHeight * dpr;
+      
+      // 컨텍스트 설정
+      const ctx = canvas.getContext('2d');
+      ctx.scale(dpr, dpr);
+      ctx.lineCap = 'round';
+      ctxRef.current = ctx;
+      
+      // 배경 다시 그리기
+      drawBackground();
+      
+      console.log('캔버스 크기 업데이트:', { 
+        availableWidth, 
+        availableHeight, 
+        canvasWidth, 
+        canvasHeight,
+        ratio: `${Math.round(canvasWidth/canvasHeight*100)/100}:1`
+      });
+    };
+
+    // 디바운싱된 리사이즈 함수
+    let resizeTimeout;
+    const debouncedResize = () => {
+      clearTimeout(resizeTimeout);
+      resizeTimeout = setTimeout(resizeCanvas, 100);
+    };
+
+    // 초기 설정
+    setTimeout(resizeCanvas, 100); // 초기 렌더링 후 실행
+    
+    // 리사이즈 이벤트 리스너
+    window.addEventListener('resize', debouncedResize);
+    
+    return () => {
+      window.removeEventListener('resize', debouncedResize);
+      clearTimeout(resizeTimeout);
+    };
   }, []);
+
+  // 턴이 바뀔 때마다 캔버스 초기화
+  useEffect(() => {
+    if (!turnInfo?.turnId) return;
+    
+    console.log('🔄 새로운 턴 시작 - 캔버스 초기화:', turnInfo.turnId);
+    
+    const canvas = canvasRef.current;
+    const ctx = ctxRef.current;
+    
+    if (canvas && ctx) {
+      const rect = canvas.getBoundingClientRect();
+      ctx.clearRect(0, 0, rect.width, rect.height);
+      drawBackground();
+      setHistory([]);
+      setCurrentStroke([]);
+      setIsDrawing(false);
+    }
+  }, [turnInfo?.turnId]);
+
+  // 다른 사용자의 그림 데이터를 받아서 처리하는 이벤트 리스너
+  useEffect(() => {
+    const handleDrawReceived = (event) => {
+      const drawData = event.detail;
+      console.log('📨 Canvas에서 drawReceived 이벤트 수신:', drawData);
+      
+      if (drawData && drawData.points && drawData.points.length > 0) {
+        console.log('✅ 유효한 그림 데이터 - 그리기 실행');
+        drawReceivedStroke(drawData);
+      } else if (drawData && drawData.color === "CLEAR_CANVAS") {
+        console.log('🗑️ 지우기 명령 수신');
+        drawReceivedStroke(drawData);
+      } else if (drawData && drawData.color === "UNDO_CANVAS") {
+        console.log('↩️ 되돌리기 명령 수신');
+        drawReceivedStroke(drawData);
+      } else {
+        console.warn('⚠️ 유효하지 않은 그림 데이터:', drawData);
+      }
+    };
+
+    console.log('📡 drawReceived 이벤트 리스너 등록');
+    window.addEventListener('drawReceived', handleDrawReceived);
+    
+    return () => {
+      console.log('📡 drawReceived 이벤트 리스너 제거');
+      window.removeEventListener('drawReceived', handleDrawReceived);
+    };
+  }, []);
+
+  // 다른 사용자의 그림을 캔버스에 그리는 함수
+  const drawReceivedStroke = (drawData) => {
+    const ctx = ctxRef.current;
+    const canvas = canvasRef.current;
+    
+    if (!ctx || !canvas) return;
+
+    // 지우기 명령 처리
+    if (drawData.color === "CLEAR_CANVAS") {
+      console.log('🗑️ 다른 사용자가 캔버스 지우기');
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      drawBackground();
+      setHistory([]);
+      return;
+    }
+
+    // 되돌리기 명령 처리
+    if (drawData.color === "UNDO_CANVAS") {
+      console.log('↩️ 다른 사용자가 되돌리기');
+      setHistory(prevHistory => {
+        if (prevHistory.length > 0) {
+          const newHistory = prevHistory.slice(0, -1);
+          redrawCanvas(newHistory);
+          return newHistory;
+        }
+        return prevHistory;
+      });
+      return;
+    }
+
+    if (!drawData.points || drawData.points.length < 2) return;
+
+    const rect = canvas.getBoundingClientRect();
+
+    ctx.beginPath();
+    ctx.strokeStyle = drawData.color || '#000000';
+    ctx.lineWidth = drawData.width || 2;
+    
+    // 스케일링된 좌표를 상대 좌표로 변환 후 절대 좌표로 변환
+    const absolutePoints = drawData.points.map(point => ({
+      x: (point.x / 10000) * rect.width,
+      y: (point.y / 10000) * rect.height,
+      color: drawData.color || '#000000',
+      lineWidth: drawData.width || 2
+    }));
+    
+    // 첫 번째 점으로 이동
+    ctx.moveTo(absolutePoints[0].x, absolutePoints[0].y);
+    
+    // 나머지 점들을 연결
+    for (let i = 1; i < absolutePoints.length; i++) {
+      ctx.lineTo(absolutePoints[i].x, absolutePoints[i].y);
+    }
+    
+    ctx.stroke();
+    ctx.closePath();
+
+    // 다른 플레이어의 스트로크도 history에 추가
+    setHistory(prevHistory => [...prevHistory, absolutePoints]);
+
+    console.log('🎨 그림 그리기 완료 (좌표 변환):', {
+      originalPoints: drawData.points.slice(0, 2),
+      convertedPoints: absolutePoints.slice(0, 2),
+      canvasSize: { width: rect.width, height: rect.height }
+    });
+  };
+
+  // 그림 데이터를 서버로 전송하는 함수
+  const sendDrawData = (points) => {
+    console.log('📤 sendDrawData 호출:', { 
+      gameId, 
+      turnId: turnInfo?.turnId, 
+      isQuizMaster, 
+      pointsLength: points.length 
+    });
+
+    if (!gameId) {
+      console.error('❌ gameId가 없습니다:', gameId);
+      return;
+    }
+
+    if (!turnInfo?.turnId) {
+      console.error('❌ turnId가 없습니다:', turnInfo?.turnId);
+      return;
+    }
+
+    if (!isQuizMaster) {
+      console.error('❌ 출제자가 아닙니다:', isQuizMaster);
+      return;
+    }
+
+    if (points.length < 2) {
+      console.warn('⚠️ 점이 너무 적습니다:', points.length);
+      return;
+    }
+
+    const canvas = canvasRef.current;
+    const rect = canvas.getBoundingClientRect();
+    
+    // 백엔드 API에 맞는 형식으로 변환 (절대 좌표를 상대 좌표로)
+    const drawData = {
+      turnId: turnInfo.turnId,
+      color: color,
+      width: lineWidth,
+      points: points.map(point => ({ 
+        // 상대 좌표를 10000배 스케일링 (백엔드 int 타입 대응)
+        x: Math.round((point.x / rect.width) * 10000),
+        y: Math.round((point.y / rect.height) * 10000)
+      }))
+    };
+
+    console.log('📤 그림 데이터 전송 시도:', drawData);
+
+    const success = webSocketService.sendDraw(gameId, drawData);
+    console.log('📤 전송 결과:', success ? '성공' : '실패');
+  };
+
+  // 캔버스 지우기를 서버로 전송하는 함수
+  const sendClearCanvas = () => {
+    if (!gameId || !turnInfo?.turnId || !isQuizMaster) {
+      return;
+    }
+
+    // 지우기는 특별한 DrawDto로 전송
+    const clearData = {
+      turnId: turnInfo.turnId,
+      color: "CLEAR_CANVAS", // 특별한 색상 코드로 지우기 신호
+      width: 0,
+      points: []
+    };
+
+    console.log('🗑️ 캔버스 지우기 전송:', clearData);
+    webSocketService.sendDraw(gameId, clearData);
+  };
+
+  // 되돌리기를 서버로 전송하는 함수
+  const sendUndo = () => {
+    if (!gameId || !turnInfo?.turnId || !isQuizMaster) {
+      return;
+    }
+
+    // 되돌리기는 특별한 DrawDto로 전송
+    const undoData = {
+      turnId: turnInfo.turnId,
+      color: "UNDO_CANVAS", // 특별한 색상 코드로 되돌리기 신호
+      width: 0,
+      points: []
+    };
+
+    console.log('↩️ 되돌리기 전송:', undoData);
+    webSocketService.sendDraw(gameId, undoData);
+  };
 
   const drawBackground = () => {
     const ctx = ctxRef.current;
     const canvas = canvasRef.current;
-    const { width, height } = canvas;
+    const rect = canvas.getBoundingClientRect();
+    const { width, height } = rect;
+    
     ctx.save();
     ctx.fillStyle = '#ffffff';
     ctx.fillRect(0, 0, width, height);
@@ -44,28 +310,45 @@ const Canvas = ({ isQuizMaster, answer, timePercent }) => {
     ctx.restore();
   };
 
+  // 마우스 좌표를 캔버스 좌표로 변환하는 함수
+  const getCanvasCoordinates = (e) => {
+    const canvas = canvasRef.current;
+    const rect = canvas.getBoundingClientRect();
+    
+    return {
+      x: e.clientX - rect.left,
+      y: e.clientY - rect.top
+    };
+  };
+
   const startDrawing = (e) => {
-    const { offsetX, offsetY } = e.nativeEvent;
+    if (!isQuizMaster) return; // 출제자만 그림을 그릴 수 있음
+    
+    console.log('🎨 그리기 시작 - 출제자 확인:', { isQuizMaster, gameId, turnId: turnInfo?.turnId });
+    
+    const coords = getCanvasCoordinates(e);
     ctxRef.current.beginPath();
-    ctxRef.current.moveTo(offsetX, offsetY);
+    ctxRef.current.moveTo(coords.x, coords.y);
     ctxRef.current.strokeStyle = color;
     ctxRef.current.lineWidth = lineWidth;
     setIsDrawing(true);
-    setCurrentStroke([{ x: offsetX, y: offsetY, color, lineWidth }]);
+    setCurrentStroke([{ x: coords.x, y: coords.y, color, lineWidth }]);
   };
 
   const draw = (e) => {
-    if (!isDrawing) return;
-    const { offsetX, offsetY } = e.nativeEvent;
-    ctxRef.current.lineTo(offsetX, offsetY);
+    if (!isDrawing || !isQuizMaster) return;
+    
+    const coords = getCanvasCoordinates(e);
+    ctxRef.current.lineTo(coords.x, coords.y);
     ctxRef.current.stroke();
-    setCurrentStroke(prev => [...prev, { x: offsetX, y: offsetY, color, lineWidth }]);
+    setCurrentStroke(prev => [...prev, { x: coords.x, y: coords.y, color, lineWidth }]);
   };
 
   const handleMouseLeave = () => {
     if (isDrawing && currentStroke.length > 1) {
-      // 현재 스트로크를 히스토리에 저장하고 패스 종료
+      // 현재 스트로크를 히스토리에 저장하고 서버로 전송
       setHistory(prev => [...prev, currentStroke]);
+      sendDrawData(currentStroke);
       ctxRef.current.closePath();
       setCurrentStroke([]);
       // isDrawing은 true로 유지해서 다시 들어왔을 때 이어서 그릴 수 있도록
@@ -73,20 +356,25 @@ const Canvas = ({ isQuizMaster, answer, timePercent }) => {
   };
 
   const handleMouseEnter = (e) => {
-    if (isDrawing) {
+    if (isDrawing && isQuizMaster) {
       // 새로운 스트로크 시작
-      const { offsetX, offsetY } = e.nativeEvent;
+      const coords = getCanvasCoordinates(e);
       ctxRef.current.beginPath();
-      ctxRef.current.moveTo(offsetX, offsetY);
+      ctxRef.current.moveTo(coords.x, coords.y);
       ctxRef.current.strokeStyle = color;
       ctxRef.current.lineWidth = lineWidth;
-      setCurrentStroke([{ x: offsetX, y: offsetY, color, lineWidth }]);
+      setCurrentStroke([{ x: coords.x, y: coords.y, color, lineWidth }]);
     }
   };
 
   const stopDrawing = () => {
+    console.log('🎨 그리기 종료:', { strokeLength: currentStroke.length, isQuizMaster });
+    
     if (currentStroke.length > 1) {
       setHistory(prev => [...prev, currentStroke]);
+      // 스트로크가 완료되면 서버로 전송
+      console.log('📤 스트로크 완료 - 서버로 전송 시도');
+      sendDrawData(currentStroke);
     }
     ctxRef.current.closePath();
     setIsDrawing(false);
@@ -96,7 +384,9 @@ const Canvas = ({ isQuizMaster, answer, timePercent }) => {
   const redrawCanvas = (strokes) => {
     const ctx = ctxRef.current;
     const canvas = canvasRef.current;
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    const rect = canvas.getBoundingClientRect();
+    
+    ctx.clearRect(0, 0, rect.width, rect.height);
     drawBackground();
     strokes.forEach(stroke => {
       if (stroke.length < 2) return;
@@ -113,18 +403,23 @@ const Canvas = ({ isQuizMaster, answer, timePercent }) => {
   };
 
   const handleUndo = () => {
-    if (history.length === 0) return;
+    if (history.length === 0 || !isQuizMaster) return;
     const newHistory = history.slice(0, -1);
     setHistory(newHistory);
     redrawCanvas(newHistory);
+    sendUndo(); // 서버로 되돌리기 명령 전송
   };
 
   const handleClear = () => {
+    if (!isQuizMaster) return;
     const canvas = canvasRef.current;
     const ctx = ctxRef.current;
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    const rect = canvas.getBoundingClientRect();
+    
+    ctx.clearRect(0, 0, rect.width, rect.height);
     drawBackground();
     setHistory([]);
+    sendClearCanvas();
   };
 
   return (
@@ -132,7 +427,7 @@ const Canvas = ({ isQuizMaster, answer, timePercent }) => {
       {/* 캔버스 카드 배경 */}
       <div className={styles.canvasCard}></div>
       
-      {/* 상단 반투명 도구 모음 */}
+      {/* 상단 반투명 도구 모음 - 모든 플레이어에게 표시 */}
       <div className={styles.canvasToolbar}>
         <div className={styles.toolGroup}>
           <label className={styles.colorTool}>
@@ -142,6 +437,7 @@ const Canvas = ({ isQuizMaster, answer, timePercent }) => {
               value={color} 
               onChange={e => setColor(e.target.value)}
               className={styles.colorInput}
+              disabled={!isQuizMaster}
             />
           </label>
           <label className={styles.brushTool}>
@@ -153,6 +449,7 @@ const Canvas = ({ isQuizMaster, answer, timePercent }) => {
               value={lineWidth} 
               onChange={e => setLineWidth(Number(e.target.value))}
               className={styles.rangeInput}
+              disabled={!isQuizMaster}
             />
             <span className={styles.lineWidthDisplay}>{lineWidth}px</span>
           </label>
@@ -160,7 +457,7 @@ const Canvas = ({ isQuizMaster, answer, timePercent }) => {
         <div className={styles.actionGroup}>
           <button 
             onClick={handleUndo} 
-            disabled={history.length === 0}
+            disabled={history.length === 0 || !isQuizMaster}
             className={styles.toolButton}
           >
             <span className={styles.buttonIcon}>↩️</span>
@@ -168,6 +465,7 @@ const Canvas = ({ isQuizMaster, answer, timePercent }) => {
           </button>
           <button 
             onClick={handleClear}
+            disabled={!isQuizMaster}
             className={styles.toolButton}
           >
             <span className={styles.buttonIcon}>🗑️</span>
@@ -190,11 +488,11 @@ const Canvas = ({ isQuizMaster, answer, timePercent }) => {
           onMouseUp={stopDrawing}
           onMouseEnter={handleMouseEnter}
           onMouseLeave={handleMouseLeave}
+          style={{ 
+            cursor: isQuizMaster ? 'crosshair' : 'default',
+            pointerEvents: isQuizMaster ? 'auto' : 'none'
+          }}
         />
-      </div>
-      
-      <div className={styles.timeBarBg}>
-        <div className={styles.timeBar} style={{ width: `${timePercent}%` }} />
       </div>
     </div>
   );
