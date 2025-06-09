@@ -1,4 +1,5 @@
 import axios from "axios";
+import useUserStore from "../stores/userStore";
 
 // 재발급 요청 중인지 확인하는 플래그
 let isRefreshing = false;
@@ -16,6 +17,46 @@ const processQueue = (error, token = null) => {
   });
   
   failedQueue = [];
+};
+
+// 완전한 로그아웃 처리 함수
+const performCompleteLogout = async () => {
+  try {
+    // 1. localStorage 정리
+    try {
+      localStorage.removeItem('drawcen_user');
+      localStorage.removeItem('token');
+      localStorage.removeItem('refreshToken');
+    } catch (e) {
+      console.warn('localStorage 정리 실패:', e);
+    }
+
+    // 2. Zustand 스토어 초기화
+    try {
+      useUserStore.getState().deleteUser();
+    } catch (e) {
+      console.warn('Zustand 스토어 정리 실패:', e);
+    }
+
+    // 3. 서버 로그아웃 API 호출 (쿠키 정리) - 실패해도 무시
+    try {
+      await api.delete('/api/auth/logout');
+      console.log('서버 로그아웃 성공');
+    } catch (e) {
+      console.warn('서버 로그아웃 실패 (무시):', e.message);
+    }
+
+    // 4. 랜딩페이지로 리다이렉트
+    if (window.location.pathname !== '/') {
+      window.location.href = '/';
+    }
+  } catch (error) {
+    console.error('완전한 로그아웃 처리 중 오류:', error);
+    // 최소한 리다이렉트는 수행
+    if (window.location.pathname !== '/') {
+      window.location.href = '/';
+    }
+  }
 };
 
 // 기본 axios 인스턴스 생성
@@ -47,28 +88,6 @@ api.interceptors.response.use(
         error.response?.data?.code === 40101 &&
         !originalRequest.url?.includes('/api/auth/logout')) {
       
-      // 재시도 횟수 초기화 및 증가
-      originalRequest._retryCount = (originalRequest._retryCount || 0) + 1;
-      
-      // 2번 초과 재시도 시 로그아웃 처리
-      if (originalRequest._retryCount > 2) {
-        // localStorage 정리
-        try {
-          localStorage.removeItem('drawcen_user');
-          localStorage.removeItem('token');
-          localStorage.removeItem('refreshToken');
-        } catch (e) {
-          // localStorage 정리 실패 시 무시
-        }
-        
-        // 랜딩페이지로 리다이렉트
-        if (window.location.pathname !== '/') {
-          window.location.href = '/';
-        }
-        
-        return Promise.reject(error);
-      }
-      
       if (isRefreshing) {
         // 이미 재발급 요청 중이면 대기
         return new Promise((resolve, reject) => {
@@ -84,8 +103,12 @@ api.interceptors.response.use(
       isRefreshing = true;
 
       try {
+        console.log('토큰 재발급 시도 중...');
+        
         // 토큰 재발급 요청
         await api.post('/api/auth/oauth2/refresh');
+        
+        console.log('토큰 재발급 성공');
         
         // 대기 중인 요청들 처리
         processQueue(null);
@@ -95,44 +118,22 @@ api.interceptors.response.use(
         return api(originalRequest);
         
       } catch (refreshError) {
+        console.error('토큰 재발급 실패:', refreshError);
+        
         // 대기 중인 요청들 에러 처리
         processQueue(refreshError);
         isRefreshing = false;
         
-        // 재발급 실패 시 로그아웃 처리
-        // localStorage 정리
-        try {
-          localStorage.removeItem('drawcen_user');
-          localStorage.removeItem('token');
-          localStorage.removeItem('refreshToken');
-        } catch (e) {
-          // localStorage 정리 실패 시 무시
-        }
-        
-        // 랜딩페이지로 리다이렉트 (현재 페이지가 랜딩페이지가 아닌 경우에만)
-        if (window.location.pathname !== '/') {
-          window.location.href = '/';
-        }
-        
+        // 재발급 실패 시 완전한 로그아웃 처리
+        await performCompleteLogout();
         return Promise.reject(refreshError);
       }
     }
 
-    // 다른 401 에러나 기타 에러는 그대로 전달
+    // 40101을 제외한 401 에러는 완전한 로그아웃 처리
     if (error.response?.status === 401) {
-      // localStorage 정리
-      try {
-        localStorage.removeItem('drawcen_user');
-        localStorage.removeItem('token');
-        localStorage.removeItem('refreshToken');
-      } catch (e) {
-        // localStorage 정리 실패 시 무시
-      }
-      
-      // 랜딩페이지로 리다이렉트 (현재 페이지가 랜딩페이지가 아닌 경우에만)
-      if (window.location.pathname !== '/') {
-        window.location.href = '/';
-      }
+      console.warn('401 인증 에러 발생:', originalRequest.url);
+      await performCompleteLogout();
     }
     
     return Promise.reject(error);
