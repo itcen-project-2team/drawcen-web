@@ -12,29 +12,45 @@ const RankingModal = ({ isOpen, onClose, rankings, gameId }) => {
   const testPlayers = [
     { memberId: 'test1', nickname: '테스트플레이어테스트 플레이어', score: 85, avatar: null },
     { memberId: 'test2', nickname: '테스트플레이어2', score: 72, avatar: null },
-    { memberId: 'test3', nickname: '테스트플레이어3', score: 68, avatar: null },
-    { memberId: 'test4', nickname: '테스트플레이어4', score: 45, avatar: null }
+    { memberId: 'test3', nickname: '테스트플레이어3', score: 72, avatar: null },
+    { memberId: 'test4', nickname: '테스트플레이어4', score: 68, avatar: null }
   ];
   
   // 기존 플레이어와 테스트 플레이어를 합쳐서 점수 순으로 정렬
   const sortedRankingsWithTest = [...sortedRankings, ...testPlayers].sort((a, b) => b.score - a.score);
 
-  // 순위별 메달/번호 반환
-  const getRankDisplay = (index) => {
-    switch (index) {
-      case 0: return '🥇';
-      case 1: return '🥈';
-      case 2: return '🥉';
-      default: return `${index + 1}`;
+  // 동점자 처리를 위한 순위 계산
+  const calculateRank = (players) => {
+    let currentRank = 1;
+    return players.map((player, index) => {
+      if (index > 0 && player.score < players[index - 1].score) {
+        currentRank = index + 1;
+      }
+      return {
+        ...player,
+        rank: currentRank
+      };
+    });
+  };
+
+  const playersWithRank = calculateRank(sortedRankingsWithTest);
+
+  // 순위별 메달/번호 반환 (실제 순위 기반)
+  const getRankDisplay = (rank) => {
+    switch (rank) {
+      case 1: return '🥇';
+      case 2: return '🥈';
+      case 3: return '🥉';
+      default: return `${rank}`;
     }
   };
 
-  // 순위별 스타일 클래스
-  const getRankClass = (index) => {
-    switch (index) {
-      case 0: return styles.firstPlace;
-      case 1: return styles.secondPlace;
-      case 2: return styles.thirdPlace;
+  // 순위별 스타일 클래스 (실제 순위 기반)
+  const getRankClass = (rank) => {
+    switch (rank) {
+      case 1: return styles.firstPlace;
+      case 2: return styles.secondPlace;
+      case 3: return styles.thirdPlace;
       default: return styles.normalPlace;
     }
   };
@@ -52,10 +68,10 @@ const RankingModal = ({ isOpen, onClose, rankings, gameId }) => {
         
         <div className={styles.modalBody}>
           <div className={styles.rankingList}>
-            {sortedRankingsWithTest.map((player, index) => (
-              <div key={player.memberId} className={`${styles.rankingItem} ${getRankClass(index)}`}>
+            {playersWithRank.map((player, index) => (
+              <div key={player.memberId} className={`${styles.rankingItem} ${getRankClass(player.rank)}`}>
                 <div className={styles.rankDisplay}>
-                  {getRankDisplay(index)}
+                  {getRankDisplay(player.rank)}
                 </div>
                 <div className={styles.playerInfo}>
                   <img 
