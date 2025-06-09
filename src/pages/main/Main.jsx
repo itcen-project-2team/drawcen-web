@@ -39,8 +39,6 @@ const Main = () => {
           // 로그인된 상태 - 서버에서 { email: "user@example.com" } 형태로 응답
           setUser(userData);
 
-          // 현재 참여 중인 방이 있는지 확인
-          await checkCurrentRoom();
         } else {
           navigate('/');
         }
@@ -68,60 +66,6 @@ const Main = () => {
       
     } catch (error) {
       console.error('❌ 게임 관련 연결 정리 중 오류:', error);
-    }
-  };
-
-  // 현재 참여 중인 방 확인 및 자동 연결
-  const checkCurrentRoom = async () => {
-    try {
-      const currentRoomInfo = await getCurrentRoom();
-
-      if (currentRoomInfo && currentRoomInfo.roomCode) {
-        console.log('기존 참여 중인 방 발견:', currentRoomInfo);
-
-        // WebSocket 연결
-        await webSocketService.connect();
-        console.log('기존 방 WebSocket 연결 완료');
-
-        setCurrentRoomCode(currentRoomInfo.roomCode);
-        if (currentRoomInfo.participants) {
-          setParticipants(currentRoomInfo.participants);
-        }
-
-        // 방 구독
-        webSocketService.subscribeToRoom(currentRoomInfo.roomCode, (message) => {
-          console.log('기존 방 메시지 수신:', message);
-
-          if (message.participantList) {
-            setParticipants(message.participantList);
-            console.log('참가자 목록 업데이트:', message.participantList);
-          }
-
-          if (message.type === 'GAME_STARTED') {
-            console.log('게임 시작! gameId:', message.gameId, 'roomId:', message.roomId);
-            console.log('게임 참가자:', message.gameParticipants);
-            setIsWaitingRoomOpen(false);
-            // 게임 페이지로 이동 (게임 데이터 전달)
-            navigate(`/game/${message.gameId}`, {
-              state: {
-                gameData: {
-                  gameId: message.gameId,
-                  roomCode: message.roomCode,
-                  gameParticipants: message.gameParticipants,
-                  currentUser: user
-                }
-              }
-            });
-          }
-        });
-
-        // 대기실 모달 자동으로 열기
-        setIsWaitingRoomOpen(true);
-        console.log('기존 참여 방 대기실 모달 자동 열기');
-      }
-    } catch (error) {
-      console.error('현재 방 확인 중 오류:', error);
-      // 에러가 발생해도 메인 페이지는 정상적으로 표시
     }
   };
 
