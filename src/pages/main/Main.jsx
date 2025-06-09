@@ -27,9 +27,8 @@ const Main = () => {
   const [isCheckingLogin, setIsCheckingLogin] = useState(true);
   
   // 닉네임 관련 상태 추가
-  const [nicknameInput, setNicknameInput] = useState('');
-  const [randomNickname, setRandomNickname] = useState('');
   const [isNicknameLoading, setIsNicknameLoading] = useState(false);
+  const [currentNickname, setCurrentNickname] = useState('');
 
   // 페이지 로드 시 로그인 상태 체크
   useEffect(() => {
@@ -188,8 +187,7 @@ const Main = () => {
     setIsRoomCodeModalOpen(false);
     
     // 닉네임 모달 상태 초기화
-    setNicknameInput('');
-    setRandomNickname('');
+    setCurrentNickname('');
   };
 
   const handleTeamCodeInput = () => {
@@ -198,8 +196,16 @@ const Main = () => {
 
   const handleEditProfile = () => {
     setIsProfileModalOpen(false);
-    setNicknameInput(user?.nickname || ''); // 현재 닉네임을 입력창에 설정
+    setCurrentNickname(user?.nickname || ''); // 현재 닉네임을 설정
     setIsNicknameModalOpen(true);
+  };
+
+  // 닉네임 텍스트 클릭 시 직접 입력
+  const handleNicknameTextClick = () => {
+    const newNickname = prompt('새 닉네임을 입력하세요:', currentNickname || user?.nickname || '');
+    if (newNickname !== null && newNickname.trim()) {
+      setCurrentNickname(newNickname.trim());
+    }
   };
 
   // 랜덤 닉네임 생성
@@ -208,8 +214,7 @@ const Main = () => {
     try {
       const nicknameData = await getRandomNickname();
       if (nicknameData && nicknameData.nickname) {
-        setRandomNickname(nicknameData.nickname);
-        setNicknameInput(nicknameData.nickname);
+        setCurrentNickname(nicknameData.nickname);
       } else {
         alert('닉네임 생성에 실패했습니다.');
       }
@@ -223,7 +228,7 @@ const Main = () => {
 
   // 닉네임 수정
   const handleNicknameChange = async () => {
-    const trimmedNickname = nicknameInput.trim();
+    const trimmedNickname = currentNickname.trim();
     if (!trimmedNickname) {
       alert('닉네임을 입력해주세요.');
       return;
@@ -236,8 +241,7 @@ const Main = () => {
         // 성공적으로 수정되면 전역 상태와 로컬스토리지 업데이트
         updateUser({ nickname: trimmedNickname });
         setIsNicknameModalOpen(false);
-        setNicknameInput('');
-        setRandomNickname('');
+        setCurrentNickname('');
         alert('닉네임이 성공적으로 변경되었습니다.');
       } else {
         alert('닉네임 변경에 실패했습니다.');
@@ -248,11 +252,6 @@ const Main = () => {
     } finally {
       setIsNicknameLoading(false);
     }
-  };
-
-  // 닉네임 입력창 변경
-  const handleNicknameInputChange = (e) => {
-    setNicknameInput(e.target.value);
   };
 
   const handleRoomCodeChange = (e) => {
@@ -426,31 +425,25 @@ const Main = () => {
       <Modal isOpen={isNicknameModalOpen} onClose={handleCloseModal}>
         <div className="nickname-modal">
           <div className="nickname-top-buttons">
-            <Button 
-              variant="outline" 
-              size="medium" 
-              shape="square"
+            <button 
+              className="nickname-type-button"
               onClick={handleGenerateNickname}
               disabled={isNicknameLoading}
             >
               {isNicknameLoading ? '생성 중...' : '닉네임 생성'}
-            </Button>
-            <div className="nickname-input-container">
-              <input
-                type="text"
-                value={nicknameInput}
-                onChange={handleNicknameInputChange}
-                placeholder="닉네임을 입력하세요"
-                maxLength={20}
-                className="nickname-input"
-              />
-            </div>
+            </button>
+            <span 
+              className="current-nickname-text"
+              onClick={handleNicknameTextClick}
+            >
+              {currentNickname || user?.nickname || '승준짱 승준짱'}
+            </span>
           </div>
           <Button 
             variant="secondary" 
             size="medium" 
             onClick={handleNicknameChange}
-            disabled={isNicknameLoading || !nicknameInput.trim()}
+            disabled={isNicknameLoading || !currentNickname.trim()}
           >
             {isNicknameLoading ? '수정 중...' : '수정'}
           </Button>
