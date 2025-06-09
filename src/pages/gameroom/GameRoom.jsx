@@ -6,6 +6,7 @@ import Canvas from "./Canvas";
 import ChatBox from "./ChatBox";
 import RankingModal from "../../components/modal/RankingModal";
 import StartAnimation from "../../components/animation/StartAnimation";
+import CorrectAnimation from "../../components/animation/CorrectAnimation";
 import styles from "./GameRoom.module.css";
 import logo from "../../assets/logo.png";
 import { getUserProfileImage } from "../../utils/profileImages";
@@ -59,6 +60,12 @@ const GameRoom = () => {
 
   // 게임 시작 애니메이션 상태
   const [showStartAnimation, setShowStartAnimation] = useState(false);
+
+  // 정답 애니메이션 상태
+  const [showCorrectAnimation, setShowCorrectAnimation] = useState(false);
+
+  // 게임 시작 여부 추적 ref (리렌더링에도 값 유지)
+  const gameStartedRef = useRef(false);
 
   // ref를 항상 최신 상태로 동기화
   useEffect(() => {
@@ -198,8 +205,12 @@ const GameRoom = () => {
 
           console.log('🎯 새 턴 시작:', { turnId, drawerId, startTime, endTime });
           
-          // START 애니메이션 트리거
-          setShowStartAnimation(true);
+          // 게임이 처음 시작할 때만 START 애니메이션 트리거
+          if (!gameStartedRef.current) {
+            console.log('🎬 게임 첫 시작 - START 애니메이션 트리거');
+            setShowStartAnimation(true);
+            gameStartedRef.current = true;
+          }
           
           console.log('🎯 turnInfo 설정 전:', turnInfo);
           setTurnInfo({ turnId, drawerId, startTime, endTime });
@@ -297,7 +308,7 @@ const GameRoom = () => {
             }
           }
 
-          console.log('�� 채팅 메시지 최종 처리:', {
+          console.log('🎯 채팅 메시지 최종 처리:', {
             message: chatMessage,
             senderId,
             nickname: finalNickname
@@ -325,19 +336,20 @@ const GameRoom = () => {
             return;
           }
 
+          // 현재 사용자가 정답을 맞췄는지 확인
+          const isCurrentUserCorrect = currentUserRef.current && 
+            (currentUserRef.current.id === memberId || currentUserRef.current.memberId === memberId);
+
+          if (isCurrentUserCorrect) {
+            console.log('🎉 현재 사용자가 정답을 맞췄습니다!');
+            setShowCorrectAnimation(true);
+          }
+
           // 최신 players 상태 사용
           const correctPlayer = playersRef.current.find(player => player.id === memberId);
           const playerName = correctPlayer ? correctPlayer.nickname : `참가자 ${memberId}`;
-          // const correctMessage = `🎉 ${playerName}님이 정답을 맞추셨습니다!`;
           
-
-          // setMessages(prev => [...prev, {
-          //   id: Date.now(),
-          //   type: 'correct',
-          //   // message: correctMessage,
-          //   timestamp: new Date(),
-          //   memberId
-          // }]);
+          console.log('✅ 정답 처리 완료:', { memberId, playerName, isCurrentUserCorrect });
           break;
 
         case 'FINISH':
@@ -808,6 +820,12 @@ const GameRoom = () => {
     console.log('🎬 START 애니메이션 완료');
   }, []);
 
+  // 정답 애니메이션 완료 콜백
+  const handleCorrectAnimationComplete = useCallback(() => {
+    setShowCorrectAnimation(false);
+    console.log('🎉 정답 애니메이션 완료');
+  }, []);
+
   return (
     <Background>
       <div className={styles.gameRoom}>
@@ -857,6 +875,11 @@ const GameRoom = () => {
       {/* 게임 시작 애니메이션 */}
       {showStartAnimation && (
         <StartAnimation onAnimationComplete={handleStartAnimationComplete} />
+      )}
+      
+      {/* 정답 애니메이션 */}
+      {showCorrectAnimation && (
+        <CorrectAnimation onAnimationComplete={handleCorrectAnimationComplete} />
       )}
     </Background>
   );
