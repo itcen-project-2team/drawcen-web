@@ -1,6 +1,9 @@
 import SockJS from 'sockjs-client';
 import { Client } from '@stomp/stompjs';
 
+// 환경변수에서 API URL 가져오기
+const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:8080';
+
 class WebSocketService {
   constructor() {
     this.client = null;
@@ -37,7 +40,7 @@ class WebSocketService {
         }
         
         let isResolved = false;
-        const socket = new SockJS('http://localhost:8080/ws');
+        const socket = new SockJS(`${API_BASE_URL}/ws`);
         
         // 연결 타임아웃 설정 (10초)
         const connectionTimeout = setTimeout(() => {
@@ -350,7 +353,7 @@ async function refreshAccessToken() {
   console.log('🔄 토큰 재발급 요청 시작');
   
   // refresh token은 쿠키로 자동 전송됨
-  const response = await fetch('http://localhost:8080/api/auth/oauth2/refresh', {
+  const response = await fetch(`${API_BASE_URL}/api/auth/oauth2/refresh`, {
     method: 'POST',
     credentials: 'include', // 꼭 필요!
   });
@@ -379,7 +382,7 @@ async function validateTokenBeforeWebSocket() {
   
   try {
     // 인증이 필요한 API 호출로 토큰 상태 확인
-    const response = await fetch('http://localhost:8080/api/member', {
+    const response = await fetch(`${API_BASE_URL}/api/member`, {
       method: 'GET',
       credentials: 'include',
     });
