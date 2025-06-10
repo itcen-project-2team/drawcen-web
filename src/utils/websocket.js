@@ -379,7 +379,7 @@ async function validateTokenBeforeWebSocket() {
   
   try {
     // 인증이 필요한 API 호출로 토큰 상태 확인
-    const response = await fetch('http://localhost:8080/api/member/info', {
+    const response = await fetch('http://localhost:8080/api/member', {
       method: 'GET',
       credentials: 'include',
     });
