@@ -26,6 +26,13 @@ const ChatBox = ({ messages, onSendMessage, currentUser }) => {
   };
 
   const formatMessage = (msg) => {
+    // 정답 메시지 패턴 감지
+    const isCorrectMessage = msg.type === 'chat' && 
+      msg.message && 
+      (msg.message.includes('님이 정답을 맞추셨습니다') || 
+       msg.message.includes('정답입니다') || 
+       msg.message.includes('맞추셨습니다'));
+
     // 메시지 타입별 포맷팅
     switch (msg.type) {
       case 'system':
@@ -54,9 +61,18 @@ const ChatBox = ({ messages, onSendMessage, currentUser }) => {
         };
       case 'chat':
       default:
+        // 정답 메시지면 correct 스타일 적용하고 닉네임 숨기기
+        if (isCorrectMessage) {
+          return {
+            className: `${styles.message} ${styles.correctMessage}`,
+            showNickname: false,
+            content: msg.message
+          };
+        }
+        
         return {
           className: `${styles.message} ${styles.chatMessage}`,
-          showNickname: false,
+          showNickname: true,
           content: msg.message
         };
     }
@@ -84,19 +100,18 @@ const ChatBox = ({ messages, onSendMessage, currentUser }) => {
           // 모든 메시지 표시 (이미 GameRoom에서 적절히 필터링됨)
           return (
             <div key={msg.id} className={formatInfo.className}>
-              {formatInfo.showNickname && (
-                <div className={styles.messageHeader}>
+              {formatInfo.showNickname ? (
+                <div className={styles.messageContent}>
                   <span className={styles.nickname}>
-                    {msg.nickname || '익명'}
+                    {msg.nickname || '익명'}:
                   </span>
-                  <span className={styles.timestamp}>
-                    {formatTime(msg.timestamp)}
-                  </span>
+                  {' '}{formatInfo.content}
+                </div>
+              ) : (
+                <div className={styles.messageContent}>
+                  {formatInfo.content}
                 </div>
               )}
-              <div className={styles.messageContent}>
-                {formatInfo.content}
-              </div>
             </div>
           );
         })}

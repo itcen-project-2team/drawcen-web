@@ -5,9 +5,11 @@ import PlayerList from "./PlayerList";
 import Canvas from "./Canvas";
 import ChatBox from "./ChatBox";
 import RankingModal from "../../components/modal/RankingModal";
+import StartAnimation from "../../components/animation/StartAnimation";
+import CorrectAnimation from "../../components/animation/CorrectAnimation";
 import styles from "./GameRoom.module.css";
 import logo from "../../assets/logo.png";
-import avatar from "../../assets/default-avatar.png";
+import { getUserProfileImage } from "../../utils/profileImages";
 import webSocketService from "../../utils/websocket";
 
 const GameRoom = () => {
@@ -56,6 +58,15 @@ const GameRoom = () => {
   const [showRankingModal, setShowRankingModal] = useState(false);
   const [gameRankings, setGameRankings] = useState([]);
 
+  // 게임 시작 애니메이션 상태
+  const [showStartAnimation, setShowStartAnimation] = useState(false);
+
+  // 정답 애니메이션 상태
+  const [showCorrectAnimation, setShowCorrectAnimation] = useState(false);
+
+  // 게임 시작 여부 추적 ref (리렌더링에도 값 유지)
+  const gameStartedRef = useRef(false);
+
   // ref를 항상 최신 상태로 동기화
   useEffect(() => {
     playersRef.current = players;
@@ -92,13 +103,22 @@ const GameRoom = () => {
 
   // 게임 참가자 데이터 변환 함수
   const convertGameParticipants = useCallback((gameParticipants) => {
-    return gameParticipants.map(participant => ({
-      id: participant.memberId,
-      nickname: participant.nickName || participant.memberName,
-      score: participant.score || 0,
-      avatar: avatar,
-      isDrawing: false
-    }));
+    return gameParticipants.map(participant => {
+      console.log('🔍 참가자 변환:', {
+        memberId: participant.memberId,
+        nickName: participant.nickName,
+        profileColor: participant.profileColor
+      });
+      
+      return {
+        id: participant.memberId,
+        nickname: participant.nickName || participant.memberName,
+        score: participant.score || 0,
+        avatar: getUserProfileImage(participant),
+        profileColor: participant.profileColor,
+        isDrawing: false
+      };
+    });
   }, []);
 
   // 현재 사용자가 출제자인지 확인 (ref 사용)
@@ -185,6 +205,13 @@ const GameRoom = () => {
 
           console.log('🎯 새 턴 시작:', { turnId, drawerId, startTime, endTime });
           
+          // 게임이 처음 시작할 때만 START 애니메이션 트리거
+          if (!gameStartedRef.current) {
+            console.log('🎬 게임 첫 시작 - START 애니메이션 트리거');
+            setShowStartAnimation(true);
+            gameStartedRef.current = true;
+          }
+          
           console.log('🎯 turnInfo 설정 전:', turnInfo);
           setTurnInfo({ turnId, drawerId, startTime, endTime });
           console.log('🎯 turnInfo 설정 후 (비동기):', { turnId, drawerId, startTime, endTime });
@@ -244,27 +271,54 @@ const GameRoom = () => {
           break;
 
         case 'CHAT':
-          if (typeof data !== 'string') {
-            console.error('❌ CHAT 데이터가 문자열이 아닙니다:', data);
+          // 새로운 채팅 JSON 구조 처리: { message, memberId, nickName }
+          if (!data || typeof data !== 'object') {
+            console.error('❌ CHAT 데이터가 객체가 아닙니다:', data);
+            return;
+          }
+
+          const { message: chatMessage, memberId: senderId, nickName: senderNickname } = data;
+          
+          if (!chatMessage || typeof chatMessage !== 'string') {
+            console.error('❌ CHAT 데이터에 유효한 메시지가 없습니다:', data);
             return;
           }
 
           // 정답 메시지인지 확인 (CORRECT 타입으로 따로 처리되므로 CHAT에서는 무시)
           const correctMessagePattern = /님이 정답을 맞추셨습니다|정답입니다|맞추셨습니다/;
-          if (correctMessagePattern.test(data)) {
+          if (correctMessagePattern.test(chatMessage)) {
             console.log('💡 정답 메시지는 CORRECT 타입으로 별도 처리되므로 CHAT에서 무시');
             return;
           }
 
           // 중복 메시지 확인
-          if (isDuplicateMessage(data, 'chat')) {
+          if (isDuplicateMessage(chatMessage, 'chat')) {
             return;
           }
 
+          // 닉네임 결정 (우선순위: senderNickname > 플레이어 목록에서 찾기 > 기본값)
+          let finalNickname = senderNickname || '익명';
+          
+          if (!senderNickname && senderId) {
+            const sender = playersRef.current.find(player => 
+              player.id === senderId || String(player.id) === String(senderId)
+            );
+            if (sender) {
+              finalNickname = sender.nickname;
+            }
+          }
+
+          console.log('🎯 채팅 메시지 최종 처리:', {
+            message: chatMessage,
+            senderId,
+            nickname: finalNickname
+          });
+          
           setMessages(prev => [...prev, {
             id: Date.now(),
             type: 'chat',
-            message: data,
+            message: chatMessage,
+            nickname: finalNickname,
             timestamp: new Date()
           }]);
           break;
@@ -282,19 +336,20 @@ const GameRoom = () => {
             return;
           }
 
+          // 현재 사용자가 정답을 맞췄는지 확인
+          const isCurrentUserCorrect = currentUserRef.current && 
+            (currentUserRef.current.id === memberId || currentUserRef.current.memberId === memberId);
+
+          if (isCurrentUserCorrect) {
+            console.log('🎉 현재 사용자가 정답을 맞췄습니다!');
+            setShowCorrectAnimation(true);
+          }
+
           // 최신 players 상태 사용
           const correctPlayer = playersRef.current.find(player => player.id === memberId);
           const playerName = correctPlayer ? correctPlayer.nickname : `참가자 ${memberId}`;
-          // const correctMessage = `🎉 ${playerName}님이 정답을 맞추셨습니다!`;
           
-
-          // setMessages(prev => [...prev, {
-          //   id: Date.now(),
-          //   type: 'correct',
-          //   // message: correctMessage,
-          //   timestamp: new Date(),
-          //   memberId
-          // }]);
+          console.log('✅ 정답 처리 완료:', { memberId, playerName, isCurrentUserCorrect });
           break;
 
         case 'FINISH':
@@ -368,10 +423,19 @@ const GameRoom = () => {
           // 랭킹 데이터 준비 (players의 닉네임과 members의 점수 결합)
           const rankings = gameFinishMembers.map(member => {
             const player = playersRef.current.find(p => p.id === member.memberId);
+            console.log(`🏆 랭킹 데이터 생성 - ${member.memberId}:`, {
+              member: member,
+              player: player,
+              playerProfileColor: player?.profileColor,
+              memberProfileColor: member.profileColor,
+              finalProfileColor: player?.profileColor || member.profileColor || 'WHITE'
+            });
+            
             return {
               memberId: member.memberId,
               nickname: player ? player.nickname : `참가자 ${member.memberId}`,
-              score: member.score
+              score: member.score,
+              profileColor: player?.profileColor || member.profileColor || 'WHITE' // 플레이어 정보 우선
             };
           });
           
@@ -408,17 +472,41 @@ const GameRoom = () => {
     console.log('💬 채팅 전용 메시지 수신:', message);
     
     try {
-      if (message && message.type === 'CHAT' && typeof message.data === 'string') {
-        // 서버로부터 닉네임 정보를 받거나, 현재 사용자의 닉네임 사용
-        const nickname = message.nickname || currentUserRef.current?.nickname || currentUserRef.current?.id || '익명';
+      if (message && message.type === 'CHAT' && message.data && typeof message.data === 'object') {
+        const { message: chatMessage, memberId: senderId, nickName: senderNickname } = message.data;
+        
+        if (!chatMessage || typeof chatMessage !== 'string') {
+          console.error('❌ 채팅 데이터에 유효한 메시지가 없습니다:', message.data);
+          return;
+        }
+
+        // 닉네임 결정 (우선순위: senderNickname > 플레이어 목록에서 찾기 > 기본값)
+        let finalNickname = senderNickname || '익명';
+        
+        if (!senderNickname && senderId) {
+          const sender = playersRef.current.find(player => 
+            player.id === senderId || String(player.id) === String(senderId)
+          );
+          if (sender) {
+            finalNickname = sender.nickname;
+          }
+        }
+
+        console.log('💬 채팅 메시지 최종 처리:', {
+          message: chatMessage,
+          senderId,
+          nickname: finalNickname
+        });
         
         setMessages(prev => [...prev, {
           id: Date.now(),
           type: 'chat',
-          message: message.data,
-          nickname: nickname,
+          message: chatMessage,
+          nickname: finalNickname,
           timestamp: new Date()
         }]);
+      } else {
+        console.warn('⚠️ 예상하지 못한 채팅 메시지 형식:', message);
       }
     } catch (error) {
       console.error('❌ 채팅 메시지 처리 중 오류:', error);
@@ -726,6 +814,18 @@ const GameRoom = () => {
     };
   }, [turnInfo.startTime, turnInfo.endTime]);
 
+  // 게임 시작 애니메이션 완료 콜백
+  const handleStartAnimationComplete = useCallback(() => {
+    setShowStartAnimation(false);
+    console.log('🎬 START 애니메이션 완료');
+  }, []);
+
+  // 정답 애니메이션 완료 콜백
+  const handleCorrectAnimationComplete = useCallback(() => {
+    setShowCorrectAnimation(false);
+    console.log('🎉 정답 애니메이션 완료');
+  }, []);
+
   return (
     <Background>
       <div className={styles.gameRoom}>
@@ -771,6 +871,16 @@ const GameRoom = () => {
         rankings={gameRankings}
         gameId={gameId}
       />
+      
+      {/* 게임 시작 애니메이션 */}
+      {showStartAnimation && (
+        <StartAnimation onAnimationComplete={handleStartAnimationComplete} />
+      )}
+      
+      {/* 정답 애니메이션 */}
+      {showCorrectAnimation && (
+        <CorrectAnimation onAnimationComplete={handleCorrectAnimationComplete} />
+      )}
     </Background>
   );
 };

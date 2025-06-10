@@ -33,7 +33,7 @@
   padding: 16px 20px;
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: 6px;
 }
 
 /* 스크롤바 스타일 */

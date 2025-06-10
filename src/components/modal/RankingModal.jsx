@@ -1,9 +1,11 @@
 import React from 'react';
 import styles from './RankingModal.module.css';
-import avatar from '../../assets/default-avatar.png';
+import { getUserProfileImage } from '../../utils/profileImages';
 
 const RankingModal = ({ isOpen, onClose, rankings, gameId }) => {
   if (!isOpen) return null;
+
+  console.log('🏆 RankingModal 랭킹 데이터:', rankings);
 
   // 점수 순으로 정렬
   const sortedRankings = [...rankings].sort((a, b) => b.score - a.score);
@@ -60,14 +62,20 @@ const RankingModal = ({ isOpen, onClose, rankings, gameId }) => {
         
         <div className={styles.modalBody}>
           <div className={styles.rankingList}>
-            {playersWithRank.map((player, index) => (
+            {playersWithRank.map((player, index) => {
+              console.log(`🖼️ 플레이어 ${player.nickname} 프로필:`, {
+                profileColor: player.profileColor,
+                avatar: getUserProfileImage(player)
+              });
+              
+              return (
               <div key={player.memberId} className={`${styles.rankingItem} ${getRankClass(player.rank)}`}>
                 <div className={styles.rankDisplay}>
                   {getRankDisplay(player.rank)}
                 </div>
                 <div className={styles.playerInfo}>
                   <img 
-                    src={player.avatar || avatar} 
+                    src={getUserProfileImage(player)} 
                     alt="avatar" 
                     className={styles.playerAvatar}
                   />
@@ -80,7 +88,8 @@ const RankingModal = ({ isOpen, onClose, rankings, gameId }) => {
                   <span className={styles.scoreLabel}>점</span>
                 </div>
               </div>
-            ))}
+              );
+            })}
           </div>
           
           <div className={styles.modalFooter}>

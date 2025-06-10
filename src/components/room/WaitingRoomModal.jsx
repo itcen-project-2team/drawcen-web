@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import './WaitingRoomModal.css';
 import Modal from '../modal/Modal';
 import Button from '../button/Button';
-import pink from '../../assets/pink.png';
+import { getUserProfileImage } from '../../utils/profileImages';
 
 const WaitingRoomModal = ({ 
   isOpen, 
@@ -52,6 +52,17 @@ const WaitingRoomModal = ({
   useEffect(() => {
     console.log('🔍 현재 사용자 정보:', currentUser);
     console.log('🔍 게임 참가자 목록:', participants);
+    
+    // 참가자별 프로필 정보 확인
+    participants.forEach((participant, index) => {
+      console.log(`🔍 참가자 ${index + 1}:`, {
+        memberId: participant.memberId,
+        memberName: participant.memberName,
+        nickname: participant.nickname,
+        profileColor: participant.profileColor,
+        완전한_객체: participant
+      });
+    });
   }, [currentUser, participants]);
 
   return (
@@ -79,7 +90,15 @@ const WaitingRoomModal = ({
                   <div className="participant-avatar">
                     <div className="participant-avatar-inner">
                       {participant ? (
-                        <img src={pink} alt="Profile" />
+                        <img 
+                          src={
+                            // 현재 사용자인 경우 currentUser의 프로필 정보 사용
+                            participant.memberId === currentUser?.id 
+                              ? getUserProfileImage(currentUser)
+                              : getUserProfileImage(participant)
+                          } 
+                          alt="Profile" 
+                        />
                       ) : ''}
                     </div>
                   </div>
