@@ -73,13 +73,6 @@ const SettingsDropdown = ({ showInGame = false }) => {
             </button>
           )}
           
-          {showInGame && (
-            <button className={styles.dropdownItem} onClick={handleMainPageNavigation}>
-              <span className={styles.itemIcon}>🏠</span>
-              <span className={styles.itemText}>메인으로</span>
-            </button>
-          )}
-          
           <button className={styles.dropdownItem} onClick={handleLogout}>
             <span className={styles.itemIcon}>🚪</span>
             <span className={styles.itemText}>로그아웃</span>
