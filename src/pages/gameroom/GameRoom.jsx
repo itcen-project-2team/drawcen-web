@@ -7,6 +7,7 @@ import ChatBox from "./ChatBox";
 import RankingModal from "../../components/modal/RankingModal";
 import StartAnimation from "../../components/animation/StartAnimation";
 import CorrectAnimation from "../../components/animation/CorrectAnimation";
+import SettingsDropdown from "../../components/modal/SettingsDropdown";
 import styles from "./GameRoom.module.css";
 import logo from "../../assets/logo.png";
 import { getUserProfileImage } from "../../utils/profileImages";
@@ -836,7 +837,13 @@ const GameRoom = () => {
           <div className={styles.roomCode}>
             room code: {currentRoomCode || roomCode || '로딩중...'}
           </div>
-          
+          <div className={styles.settingsContainer}>
+            <SettingsDropdown showInGame={true}>
+              <div className={styles.settingsButton}>
+                ⚙️
+              </div>
+            </SettingsDropdown>
+          </div>
         </div>
 
         <div className={styles.gameContent}>
@@ -862,6 +869,11 @@ const GameRoom = () => {
             </div>
           </div>
         </div>
+      </div>
+      
+      {/* 하단 설정 버튼 */}
+      <div className={styles.settingsContainer}>
+        <SettingsDropdown showInGame={true} />
       </div>
       
       {/* 랭킹 모달 */}
