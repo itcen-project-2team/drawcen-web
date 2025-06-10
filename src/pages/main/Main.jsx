@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import './Main.css';
-import PageWrapper from '../../components/pageWrapper/PageWrapper';
+import PageWrapper from '../../components/s/PageWrapper';
 import Modal from '../../components/modal/Modal';
 import Button from '../../components/button/Button';
 import WaitingRoomModal from '../../components/room/WaitingRoomModal';
