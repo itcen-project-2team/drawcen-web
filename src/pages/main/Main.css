@@ -117,9 +117,8 @@
 /* 하단 설정 버튼 컨테이너 */
 .settings-container {
   position: absolute;
-  bottom: 40px;
-  left: 50%;
-  transform: translateX(-50%);
+  top: 160px;
+  right: 80px;
   z-index: 1000;
 }
 

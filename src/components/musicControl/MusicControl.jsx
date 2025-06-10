@@ -32,15 +32,7 @@ const MusicControl = () => {
 
   return (
     <div className="music-toggle-button">
-      <button 
-        className={`music-btn ${!isMuted ? 'active' : ''}`}
-        onClick={handleToggleClick}
-        title={isMuted ? '음악 켜기' : '음악 끄기'}
-      >
-        <div className="music-icon">
-          🎵
-        </div>
-      </button>
+      
     </div>
   );
 };
