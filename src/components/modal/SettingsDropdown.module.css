@@ -32,6 +32,7 @@
 
 .settingsText {
   font-size: 14px;
+  display: none;
 }
 
 .dropdownMenu {
