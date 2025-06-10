@@ -1,0 +1,76 @@
+/* 음악 토글 버튼 */
+.music-toggle-button {
+  position: fixed;
+  bottom: 20px;
+  left: 20px;
+  z-index: 9999;
+}
+
+.music-btn {
+  width: 60px;
+  height: 60px;
+  border-radius: 15px;
+  border: none;
+  background: rgba(0, 0, 0, 0.8);
+  backdrop-filter: blur(10px);
+  cursor: pointer;
+  transition: all 0.3s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  position: relative;
+}
+
+.music-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 25px rgba(0, 0, 0, 0.4);
+  background: rgba(0, 0, 0, 0.9);
+}
+
+.music-btn:active {
+  transform: translateY(0);
+}
+
+/* 활성화 상태 (음악 재생 중) - 보라색 */
+.music-btn.active {
+  background: linear-gradient(135deg, #7c3aed, #a855f7);
+  border: 1px solid rgba(168, 85, 247, 0.3);
+}
+
+.music-btn.active:hover {
+  background: linear-gradient(135deg, #6d28d9, #9333ea);
+  box-shadow: 0 6px 25px rgba(124, 58, 237, 0.4);
+}
+
+.music-icon {
+  font-size: 24px;
+  color: white;
+  user-select: none;
+}
+
+/* 반응형 */
+@media (max-width: 768px) {
+  .music-toggle-button {
+    bottom: 15px;
+    left: 15px;
+  }
+  
+  .music-btn {
+    width: 50px;
+    height: 50px;
+    border-radius: 12px;
+  }
+  
+  .music-icon {
+    font-size: 20px;
+  }
+}
+
+/* 접근성 */
+@media (prefers-reduced-motion: reduce) {
+  .music-btn {
+    transition: none;
+  }
+} 

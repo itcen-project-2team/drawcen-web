@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import './LandingPage.css';
-import PageWrapper from '../../components/PageWrapper/PageWrapper';
+import PageWrapper from '../../components/pageWrapper/PageWrapper';
 import background from '../../assets/background.png';
 import logo from '../../assets/logo.png';
 import loginBtn from '../../assets/loginbtn.png';
