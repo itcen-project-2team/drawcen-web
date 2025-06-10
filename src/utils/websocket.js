@@ -17,41 +17,105 @@ class WebSocketService {
   }
 
   // WebSocket 연결
-  connect() {
-    return new Promise((resolve, reject) => {
-      const socket = new SockJS('http://localhost:8080/ws');
-      
-      // JWT 토큰을 localStorage에서 가져오기
-      const token = localStorage.getItem('token');
-      
-      this.client = new Client({
-        webSocketFactory: () => socket,
-        connectHeaders: {
-          // JWT 토큰을 헤더에 포함 (사용자 인증을 위해)
-          'Authorization': token ? `Bearer ${token}` : '',
-        },
-        debug: (str) => {
-          console.log('STOMP Debug:', str);
-        },
-        reconnectDelay: 5000,
-        onConnect: (frame) => {
-          console.log('WebSocket 연결 성공:', frame);
-          console.log('인증 토큰 포함됨:', !!token);
-          this.isConnected = true;
-          resolve();
-        },
-        onStompError: (frame) => {
-          console.error('WebSocket 연결 실패:', frame);
-          this.isConnected = false;
-          reject(frame);
-        },
-        onDisconnect: () => {
-          console.log('WebSocket 연결 해제');
-          this.isConnected = false;
+  connect({ retryOnAuthError = true } = {}) {
+    return new Promise(async (resolve, reject) => {
+      try {
+        console.log('🔌 WebSocket 연결 시작', { retryOnAuthError });
+        
+        // ✅ WebSocket 연결 전 토큰 상태 사전 검증
+        if (retryOnAuthError) {
+          try {
+            await validateTokenBeforeWebSocket();
+          } catch (tokenError) {
+            console.error('❌ 사전 토큰 검증 실패');
+            if (this.onErrorCallback) {
+              this.onErrorCallback('로그인이 만료되었습니다. 다시 로그인해주세요.');
+            }
+            reject(tokenError);
+            return;
+          }
         }
-      });
+        
+        let isResolved = false;
+        const socket = new SockJS('http://localhost:8080/ws');
+        
+        // 연결 타임아웃 설정 (10초)
+        const connectionTimeout = setTimeout(() => {
+          if (!isResolved) {
+            console.warn('⏰ WebSocket 연결 타임아웃 (10초)');
+            isResolved = true;
+            if (this.onErrorCallback) this.onErrorCallback('WebSocket 연결 타임아웃');
+            reject(new Error('WebSocket 연결 타임아웃'));
+          }
+        }, 10000);
 
-      this.client.activate();
+        // ✅ SockJS 이벤트 핸드셰이크 설정
+        socket.onopen = () => {
+          console.log('✅ SockJS HTTP 핸드셰이크 성공');
+        };
+
+        socket.onerror = async (error) => {
+          console.error('❌ SockJS 에러:', error);
+          clearTimeout(connectionTimeout);
+          if (!isResolved) {
+            isResolved = true;
+            if (this.onErrorCallback) this.onErrorCallback('WebSocket 연결 실패');
+            reject(error);
+          }
+        };
+
+        socket.onclose = (event) => {
+          console.log('🔌 SockJS 연결 종료:', {
+            code: event.code,
+            reason: event.reason,
+            wasClean: event.wasClean
+          });
+          clearTimeout(connectionTimeout);
+        };
+      
+        this.client = new Client({
+          webSocketFactory: () => socket,
+          debug: (str) => {
+            console.log('STOMP Debug:', str);
+          },
+          reconnectDelay: 0,
+          onConnect: (frame) => {
+            console.log('✅ WebSocket 연결 성공:', frame);
+            clearTimeout(connectionTimeout);
+            if (!isResolved) {
+              isResolved = true;
+              this.isConnected = true;
+              resolve();
+            }
+          },
+          onStompError: async (frame) => {
+            console.error('❌ WebSocket 연결 실패(onStompError):', frame);
+            clearTimeout(connectionTimeout);
+            this.isConnected = false;
+
+            if (!isResolved) {
+              isResolved = true;
+              if (this.onErrorCallback) this.onErrorCallback('WebSocket 연결 실패');
+              reject(frame);
+            }
+          },
+          onWebSocketError: async (error) => {
+            console.error('❌ 웹소켓 자체 에러(onWebSocketError):', error);
+            clearTimeout(connectionTimeout);
+          },
+          onDisconnect: () => {
+            console.log('🔌 WebSocket 연결 해제');
+            this.isConnected = false;
+          }
+        });
+
+        this.client.activate();
+
+      } catch (outerError) {
+        console.error('❌ WebSocket 연결 중 예외:', outerError);
+        if (this.onErrorCallback) this.onErrorCallback('WebSocket 연결 실패');
+        reject(outerError);
+      }
     });
   }
 
@@ -278,6 +342,84 @@ class WebSocketService {
     this.subscribeToTopic(`/topic/game/${gameId}`, (message) => {
       console.log('게임 메시지 (레거시):', message);
     });
+  }
+}
+
+// 토큰 재발급 함수 (refresh token은 HttpOnly 쿠키에 있음)
+async function refreshAccessToken() {
+  console.log('🔄 토큰 재발급 요청 시작');
+  
+  // refresh token은 쿠키로 자동 전송됨
+  const response = await fetch('http://localhost:8080/api/auth/oauth2/refresh', {
+    method: 'POST',
+    credentials: 'include', // 꼭 필요!
+  });
+  
+  console.log('🔄 토큰 재발급 응답:', {
+    status: response.status,
+    statusText: response.statusText,
+    ok: response.ok
+  });
+  
+  if (!response.ok) {
+    const errorText = await response.text();
+    console.error('❌ 토큰 재발급 실패 응답:', errorText);
+    throw new Error(`토큰 재발급 실패: ${response.status} ${errorText}`);
+  }
+  
+  console.log('✅ 토큰 재발급 성공');
+  
+  // 서버가 빈 응답 본문을 보내므로 JSON 파싱하지 않음
+  return { success: true };
+}
+
+// 토큰 상태 사전 검증 함수
+async function validateTokenBeforeWebSocket() {
+  console.log('🔍 WebSocket 연결 전 토큰 상태 검증 시작');
+  
+  try {
+    // 인증이 필요한 API 호출로 토큰 상태 확인
+    const response = await fetch('http://localhost:8080/api/member', {
+      method: 'GET',
+      credentials: 'include',
+    });
+    
+    console.log('🔍 토큰 검증 응답:', {
+      status: response.status,
+      statusText: response.statusText,
+      ok: response.ok
+    });
+    
+    if (response.ok) {
+      console.log('✅ 토큰 상태 정상 - WebSocket 연결 진행');
+      return true;
+    }
+    
+    // 401 에러인 경우 토큰 재발급 시도
+    if (response.status === 401) {
+      console.warn('⚠️ 토큰 만료 감지 - 재발급 시도');
+      const responseText = await response.text();
+      
+      try {
+        const errorData = JSON.parse(responseText);
+        if (errorData?.code === 40101) {
+          console.log('🎯 40101 토큰 만료 확인');
+        }
+      } catch (e) {
+        // JSON 파싱 실패 시 무시
+      }
+      
+      // 토큰 재발급 시도
+      await refreshAccessToken();
+      console.log('✅ 토큰 재발급 완료 - WebSocket 연결 진행');
+      return true;
+    }
+    
+    throw new Error(`토큰 검증 실패: ${response.status}`);
+    
+  } catch (error) {
+    console.error('❌ 토큰 검증 중 오류:', error);
+    throw error;
   }
 }
 
