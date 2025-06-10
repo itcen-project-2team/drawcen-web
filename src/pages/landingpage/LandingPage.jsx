@@ -16,16 +16,17 @@ const LandingPage = () => {
   const navigate = useNavigate();
   const [currentGuide, setCurrentGuide] = useState(0);
   const [isCheckingLogin, setIsCheckingLogin] = useState(true);
+  const [progressKey, setProgressKey] = useState(0); // 애니메이션 재시작용
   
   // useUserStore에서 필요한 함수들 가져오기
   const { setUser, isLoggedIn } = useUserStore();
   
   const guideImages = [playGuide1, playGuide2, playGuide3, playGuide4];
   const guideTexts = [
-    "안녕하세요111안녕하세요안녕하세요안녕하세요",
-    "안녕하세요2222안녕하세요안녕하세요안녕하세요",
-    "안녕하세요3333안녕하세요안녕하세요안녕하세요안녕하세요",
-    "안녕하세요4444안녕하세요안녕하세요안녕하세요안녕하세요"
+    "출제자에게 제시어가 주어집니다.",
+    "출제자는 제시어를 그림으로 표현합니다.",
+    "다른 참가자가 정답을 맞추면,",
+    "출제자와 정답자는 점수를 획득합니다."
   ];
 
   // 페이지 로드 시 로그인 상태 체크
@@ -55,13 +56,19 @@ const LandingPage = () => {
     }
   }, [isLoggedIn, isCheckingLogin, navigate]);
 
+  // 자동 가이드 전환 타이머
   useEffect(() => {
     const timer = setInterval(() => {
       setCurrentGuide((prev) => (prev + 1) % 4);
     }, 5000);
 
     return () => clearInterval(timer);
-  }, []);
+  }, [currentGuide]); // currentGuide가 바뀔 때마다 타이머 재시작
+
+  // 가이드 변경 시 애니메이션 재시작
+  useEffect(() => {
+    setProgressKey(prev => prev + 1);
+  }, [currentGuide]);
 
   const handleLogin = () => {
     kakaoLogin();
@@ -80,7 +87,10 @@ const LandingPage = () => {
   }
 
   const handleDotClick = (index) => {
-    setCurrentGuide(index);
+    if (index !== currentGuide) {
+      setCurrentGuide(index);
+      // currentGuide가 바뀌면 useEffect에서 자동으로 타이머와 애니메이션이 재시작됨
+    }
   };
 
   return (
@@ -128,25 +138,34 @@ const LandingPage = () => {
                       className={`dot-container ${currentGuide === index ? 'active' : ''}`}
                       onClick={() => handleDotClick(index)}
                     >
-                      <svg width="20" height="20" viewBox="0 0 20 20">
+                      <svg width="24" height="24" viewBox="0 0 24 24">
                         {currentGuide === index && (
                           <circle
+                            key={progressKey} // 애니메이션 재시작용 키
                             className="progress-ring"
-                            stroke="white"
+                            stroke="url(#progress-gradient)"
                             strokeWidth="2"
                             fill="none"
-                            r="8"
-                            cx="10"
-                            cy="10"
+                            r="10"
+                            cx="12"
+                            cy="12"
                           />
                         )}
                         <circle
                           className="dot-circle"
-                          fill={currentGuide === index ? "white" : "rgba(255, 255, 255, 0.5)"}
-                          r="6"
-                          cx="10"
-                          cy="10"
+                          fill={currentGuide === index ? "white" : "rgba(255, 255, 255, 0.3)"}
+                          r="4"
+                          cx="12"
+                          cy="12"
                         />
+                        
+                        {/* 그라데이션 정의 */}
+                        <defs>
+                          <linearGradient id="progress-gradient" x1="0%" y1="0%" x2="100%" y2="0%">
+                            <stop offset="0%" stopColor="#45D3FF" />
+                            <stop offset="100%" stopColor="#CF83FF" />
+                          </linearGradient>
+                        </defs>
                       </svg>
                     </div>
                   ))}
