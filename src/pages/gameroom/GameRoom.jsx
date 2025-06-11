@@ -841,7 +841,7 @@ const GameRoom = () => {
 
         <div className={styles.gameContent}>
           <div className={styles.leftSection}>
-            <PlayerList players={players} />
+            <PlayerList players={players} recentChatMessages={messages} />
           </div>
           <div className={styles.rightSection}>
             <div className={styles.canvasSection}>

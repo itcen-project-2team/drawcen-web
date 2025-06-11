@@ -6,7 +6,7 @@
   display: flex;
   flex-direction: column;
   padding: 0;
-  overflow: hidden;
+  overflow: visible;
 }
 
 .playerItem {
@@ -35,6 +35,79 @@
   }
   50% {
     background: rgba(25, 118, 210, 0.2);
+  }
+}
+
+/* 말풍선 스타일 */
+.speechBubble {
+  position: absolute;
+  left: 100%;
+  top: 50%;
+  transform: translateY(-50%);
+  margin-left: 10px;
+  z-index: 1000;
+  animation: bubbleAppear 0.3s ease-out;
+}
+
+.speechBubbleContent {
+  background: #ffffff;
+  border: 2px solid #45D3FF;
+  border-radius: 20px;
+  padding: 8px 16px;
+  font-size: 14px;
+  font-weight: 500;
+  color: #333;
+  white-space: nowrap;
+  max-width: 200px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  box-shadow: 0 4px 12px rgba(69, 211, 255, 0.3);
+  position: relative;
+}
+
+.speechBubbleTail {
+  position: absolute;
+  left: -8px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 0;
+  height: 0;
+  border-right: 8px solid #45D3FF;
+  border-top: 6px solid transparent;
+  border-bottom: 6px solid transparent;
+}
+
+.speechBubbleTail::after {
+  content: '';
+  position: absolute;
+  left: 2px;
+  top: -5px;
+  width: 0;
+  height: 0;
+  border-right: 6px solid #ffffff;
+  border-top: 5px solid transparent;
+  border-bottom: 5px solid transparent;
+}
+
+/* 정답 말풍선 스타일 */
+.correctBubble .speechBubbleContent {
+  background: #ffffff;
+  border: 2px solid #4CAF50;
+  box-shadow: 0 4px 12px rgba(76, 175, 80, 0.3);
+}
+
+.correctBubble .speechBubbleTail {
+  border-right: 8px solid #4CAF50;
+}
+
+@keyframes bubbleAppear {
+  from {
+    opacity: 0;
+    transform: translateY(-50%) scale(0.8);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(-50%) scale(1);
   }
 }
 
@@ -137,6 +210,12 @@
   .score {
     font-size: 0.9rem;
   }
+  
+  .speechBubbleContent {
+    font-size: 13px;
+    padding: 6px 12px;
+    max-width: 150px;
+  }
 }
 
 @media (max-width: 768px) {
@@ -161,6 +240,27 @@
   .drawingIndicator {
     font-size: 14px;
   }
+  
+  .speechBubbleContent {
+    font-size: 12px;
+    padding: 5px 10px;
+    max-width: 120px;
+  }
+  
+  .speechBubbleTail {
+    border-left-width: 6px;
+    border-top-width: 5px;
+    border-bottom-width: 5px;
+    right: -6px;
+  }
+  
+  .speechBubbleTail::after {
+    border-left-width: 4px;
+    border-top-width: 4px;
+    border-bottom-width: 4px;
+    right: 2px;
+    top: -4px;
+  }
 }
 
 @media (max-width: 480px) {
@@ -184,5 +284,11 @@
   
   .drawingIndicator {
     font-size: 12px;
+  }
+  
+  .speechBubbleContent {
+    font-size: 11px;
+    padding: 4px 8px;
+    max-width: 100px;
   }
 } 
