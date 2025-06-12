@@ -41,29 +41,28 @@
 
 .dropdownMenu {
   position: absolute;
-  bottom: 100%;
-  left: 50%;
-  transform: translateX(-50%);
-  background: rgba(255, 255, 255, 0.95);
-  border: 1px solid rgba(179, 209, 255, 0.3);
+  top: 100%;
+  left: 0;
+  background: rgba(0, 0, 0, 0.4);
+  border: 1px solid rgba(255, 255, 255, 0.2);
   border-radius: 12px;
   box-shadow: 0 8px 32px rgba(0, 0, 0, 0.15);
   backdrop-filter: blur(10px);
   z-index: 1000;
   min-width: 180px;
   padding: 8px 0;
-  margin-bottom: 8px;
+  margin-top: 8px;
   animation: dropdownFadeIn 0.2s ease-out;
 }
 
 @keyframes dropdownFadeIn {
   from {
     opacity: 0;
-    transform: translateX(-50%) translateY(10px) scale(0.95);
+    transform: translateY(-10px) scale(0.95);
   }
   to {
     opacity: 1;
-    transform: translateX(-50%) translateY(0) scale(1);
+    transform: translateY(0) scale(1);
   }
 }
 
@@ -78,14 +77,14 @@
   cursor: pointer;
   font-size: 14px;
   font-weight: 500;
-  color: #333;
+  color: #ffffff;
   text-align: left;
   transition: all 0.2s ease;
 }
 
 .dropdownItem:hover {
-  background: rgba(25, 118, 210, 0.1);
-  color: #1976d2;
+  background: rgba(255, 255, 255, 0.1);
+  color: #ffffff;
 }
 
 .dropdownItem:active {
@@ -119,8 +118,8 @@
 }
 
 .dropdownItem:last-child:hover {
-  background: rgba(244, 67, 54, 0.1);
-  color: #f44336;
+  background: rgba(244, 67, 54, 0.2);
+  color: #ff6b6b;
 }
 
 /* 반응형 디자인 */
