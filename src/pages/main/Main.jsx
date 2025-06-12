@@ -398,11 +398,6 @@ const Main = () => {
         />
       ))}
 
-      {/* 로그아웃 버튼 */}
-      <button className="logout-button content-animate" onClick={handleLogout}>
-        로그아웃
-      </button>
-
       <div className="profile-container content-animate" onClick={handleProfileClick}>
         <img src={getUserProfileImage(user)} alt="Profile" className="profile-image" />
         <span className="profile-text">{user?.nickname || user?.id || '사용자'}</span>

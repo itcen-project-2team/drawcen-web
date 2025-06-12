@@ -837,13 +837,6 @@ const GameRoom = () => {
           <div className={styles.roomCode}>
             room code: {currentRoomCode || roomCode || '로딩중...'}
           </div>
-          <div className={styles.settingsContainer}>
-            <SettingsDropdown showInGame={true}>
-              <div className={styles.settingsButton}>
-                ⚙️
-              </div>
-            </SettingsDropdown>
-          </div>
         </div>
 
         <div className={styles.gameContent}>
@@ -871,10 +864,7 @@ const GameRoom = () => {
         </div>
       </div>
       
-      {/* 하단 설정 버튼 */}
-      <div className={styles.settingsContainer}>
-        <SettingsDropdown showInGame={true} />
-      </div>
+
       
       {/* 랭킹 모달 */}
       <RankingModal 
