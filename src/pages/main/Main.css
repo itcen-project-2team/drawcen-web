@@ -114,6 +114,14 @@
   gap: 20px;
 }
 
+/* 하단 설정 버튼 컨테이너 */
+.settings-container {
+  position: absolute;
+  top: 60px;
+  left: 50px;
+  z-index: 1000;
+}
+
 .game-button {
   width: 220px;
   height: 65px;
