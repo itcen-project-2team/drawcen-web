@@ -66,6 +66,8 @@ const api = axios.create({
   headers: {
     "Content-Type": "application/json",
   },
+  xsrfCookieName: 'XSRF-TOKEN',    // 쿠키 이름
+  xsrfHeaderName: 'X-XSRF-TOKEN',  // 헤더 이름
   withCredentials: true,
 });
 
@@ -76,6 +78,15 @@ api.interceptors.request.use(
   },
   (error) => Promise.reject(error)
 );
+
+api.interceptors.request.use(config => {
+  // 쿠키에서 CSRF 토큰 꺼내기
+  const match = document.cookie.match(/XSRF-TOKEN=([^;]+)/);
+  if (match?.[1]) {
+    config.headers["X-XSRF-TOKEN"] = match[1];
+  }
+  return config;
+});
 
 // 응답 인터셉터
 api.interceptors.response.use(

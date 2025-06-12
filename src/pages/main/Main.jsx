@@ -5,6 +5,7 @@ import PageWrapper from '../../components/pageWrapper/PageWrapper';
 import Modal from '../../components/modal/Modal';
 import Button from '../../components/button/Button';
 import WaitingRoomModal from '../../components/room/WaitingRoomModal';
+import Toast from '../../components/toast/Toast';
 import SettingsDropdown from '../../components/modal/SettingsDropdown';
 import background from '../../assets/background.png';
 import logo from '../../assets/logo.png';
@@ -12,11 +13,15 @@ import editIcon from '../../assets/edit-icon.png';
 import { getUserProfileImage } from '../../utils/profileImages';
 import useUserStore from '../../stores/userStore';
 import { checkLogIn, getRandomNickname, updateNickname } from '../../services/userService';
+import useToast from '../../hooks/useToast';
+import { checkLogIn, logout, getCurrentRoom, getRandomNickname, updateNickname } from '../../services/userService';
 import { createRoom } from '../../services/roomService';
 import webSocketService from '../../utils/websocket';
 
 const Main = () => {
   const navigate = useNavigate();
+  const { deleteUser, user, isLoggedIn, setUser, updateUser } = useUserStore();
+  const { toasts, showToast, removeToast } = useToast();
   const { user, isLoggedIn, setUser, updateUser } = useUserStore();
   const [isProfileModalOpen, setIsProfileModalOpen] = useState(false);
   const [isNicknameModalOpen, setIsNicknameModalOpen] = useState(false);
@@ -201,14 +206,6 @@ const Main = () => {
     setIsNicknameModalOpen(true);
   };
 
-  // 닉네임 텍스트 클릭 시 직접 입력
-  const handleNicknameTextClick = () => {
-    const newNickname = prompt('새 닉네임을 입력하세요:', currentNickname || user?.nickname || '');
-    if (newNickname !== null && newNickname.trim()) {
-      setCurrentNickname(newNickname.trim());
-    }
-  };
-
   // 랜덤 닉네임 생성
   const handleGenerateNickname = async () => {
     setIsNicknameLoading(true);
@@ -217,10 +214,11 @@ const Main = () => {
       if (nicknameData && nicknameData.nickname) {
         setCurrentNickname(nicknameData.nickname);
       } else {
-        console.error('닉네임 생성에 실패했습니다.');
+        showToast('닉네임 생성에 실패했습니다.', 'error');
       }
     } catch (error) {
       console.error('닉네임 생성 중 오류:', error);
+      showToast('닉네임 생성 중 오류가 발생했습니다.', 'error');
     } finally {
       setIsNicknameLoading(false);
     }
@@ -230,7 +228,7 @@ const Main = () => {
   const handleNicknameChange = async () => {
     const trimmedNickname = currentNickname.trim();
     if (!trimmedNickname) {
-      console.error('닉네임이 비어있습니다.');
+      showToast('닉네임이 비어있습니다.', 'error');
       return;
     }
 
@@ -242,13 +240,14 @@ const Main = () => {
         updateUser({ nickname: trimmedNickname });
         setIsNicknameModalOpen(false);
         setCurrentNickname('');
-        // 성공 시에만 간단한 알림
-        alert('닉네임이 변경되었습니다.');
+        // alert를 토스트 메시지로 변경
+        showToast('닉네임이 변경되었습니다!', 'success');
       } else {
-        console.error('닉네임 변경에 실패했습니다.');
+        showToast('닉네임 변경에 실패했습니다.', 'error');
       }
     } catch (error) {
       console.error('닉네임 변경 중 오류:', error);
+      showToast('닉네임 변경 중 오류가 발생했습니다.', 'error');
     } finally {
       setIsNicknameLoading(false);
     }
@@ -357,6 +356,24 @@ const Main = () => {
     if (roomCodeInput) roomCodeInput.focus();
   };
 
+  // 로그아웃 처리
+  const handleLogout = async () => {
+    try {
+      // 1. 서버에 로그아웃 요청
+      await logout();
+
+      // 2. 전역 상태 초기화
+      deleteUser();
+
+      // 3. 랜딩페이지로 이동
+      navigate('/');
+    } catch (error) {
+      // 에러가 발생해도 전역 상태는 초기화하고 로그인 페이지로 이동
+      deleteUser();
+      navigate('/');
+    }
+  };
+
   // 로그인 상태 체크 중이면 로딩 표시
   if (isCheckingLogin) {
     return (
@@ -371,11 +388,27 @@ const Main = () => {
 
   return (
     <PageWrapper className="main" backgroundImage={background}>
+      {/* 토스트 메시지 렌더링 */}
+      {toasts.map(toast => (
+        <Toast
+          key={toast.id}
+          message={toast.message}
+          type={toast.type}
+          duration={toast.duration}
+          onClose={() => removeToast(toast.id)}
+        />
+      ))}
+
+      {/* 로그아웃 버튼 */}
+      <button className="logout-button content-animate" onClick={handleLogout}>
+        로그아웃
+      </button>
+
       <div className="profile-container content-animate" onClick={handleProfileClick}>
         <img src={getUserProfileImage(user)} alt="Profile" className="profile-image" />
         <span className="profile-text">{user?.nickname || user?.id || '사용자'}</span>
       </div>
-      
+
       <div className="main-content main-content-animate">
         <img src={logo} alt="DrawCen Logo" className="main-logo logo-animate" />
         <div className="button-container content-animate-delay-1">
@@ -417,7 +450,6 @@ const Main = () => {
             </button>
             <span 
               className="current-nickname-text"
-              onClick={handleNicknameTextClick}
             >
               {currentNickname || user?.nickname || '승준짱 승준짱'}
             </span>

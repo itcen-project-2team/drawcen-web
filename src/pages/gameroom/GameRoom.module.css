@@ -124,10 +124,11 @@
   border-radius: 16px;
   border: 1px solid rgba(179, 209, 255, 0.3);
   box-shadow: 0 8px 32px 0 rgba(31,38,135,0.18);
-  overflow: hidden;
+  overflow: visible;
   display: flex;
   flex-direction: column;
   padding: 0;
+  position: relative;
 }
 
 /* 반응형 유저 리스트 너비 */
