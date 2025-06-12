@@ -12,17 +12,16 @@ import logo from '../../assets/logo.png';
 import editIcon from '../../assets/edit-icon.png';
 import { getUserProfileImage } from '../../utils/profileImages';
 import useUserStore from '../../stores/userStore';
-import { checkLogIn, getRandomNickname, updateNickname } from '../../services/userService';
-import useToast from '../../hooks/useToast';
 import { checkLogIn, logout, getCurrentRoom, getRandomNickname, updateNickname } from '../../services/userService';
+import useToast from '../../hooks/useToast';
 import { createRoom } from '../../services/roomService';
 import webSocketService from '../../utils/websocket';
 
 const Main = () => {
   const navigate = useNavigate();
-  const { deleteUser, user, isLoggedIn, setUser, updateUser } = useUserStore();
+
   const { toasts, showToast, removeToast } = useToast();
-  const { user, isLoggedIn, setUser, updateUser } = useUserStore();
+  const { deleteUser, user, isLoggedIn, setUser, updateUser } = useUserStore();
   const [isProfileModalOpen, setIsProfileModalOpen] = useState(false);
   const [isNicknameModalOpen, setIsNicknameModalOpen] = useState(false);
   const [isRoomCodeModalOpen, setIsRoomCodeModalOpen] = useState(false);
