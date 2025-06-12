@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { useMusicStore } from '../../stores/musicStore';
 import useUserStore from '../../stores/userStore';
 import { logout } from '../../services/userService';
+import settingIcon from '../../assets/setting.png';
 import styles from './SettingsDropdown.module.css';
 
 const SettingsDropdown = ({ showInGame = false }) => {
@@ -58,7 +59,7 @@ const SettingsDropdown = ({ showInGame = false }) => {
   return (
     <div className={styles.settingsDropdown} ref={dropdownRef}>
       <button className={styles.settingsButton} onClick={handleToggleDropdown}>
-        <span className={styles.settingsIcon}>⚙️</span>
+        <img src={settingIcon} alt="설정" className={styles.settingsIcon} />
         <span className={styles.settingsText}>설정</span>
       </button>
       

@@ -7,27 +7,31 @@
   display: flex;
   align-items: center;
   gap: 8px;
-  padding: 12px 20px;
-  background: rgba(255, 255, 255, 0.15);
-  border: 1px solid rgba(255, 255, 255, 0.3);
-  border-radius: 12px;
+  padding: 0;
+  background: transparent;
+  border: none;
   color: #ffffff;
   font-size: 16px;
   font-weight: 600;
   cursor: pointer;
   transition: all 0.2s ease;
-  backdrop-filter: blur(10px);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
 }
 
 .settingsButton:hover {
-  background: rgba(255, 255, 255, 0.25);
-  transform: translateY(-2px);
-  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.15);
+  transform: scale(1.1);
+}
+
+.settingsButton:hover .settingsIcon {
+  filter: drop-shadow(0 0 12px #45D3FF) brightness(1.4);
+  transform: scale(1.1);
 }
 
 .settingsIcon {
-  font-size: 18px;
+  width: 55px;
+  height: 55px;
+  object-fit: contain;
+  filter: drop-shadow(0 0 8px #45D3FF) brightness(1.2);
+  transition: all 0.2s ease;
 }
 
 .settingsText {
