@@ -729,13 +729,12 @@ const GameRoom = () => {
     const handleVisibilityChange = () => {
       if (document.hidden) {
         console.log('📱 페이지가 숨겨짐 (탭 변경/최소화)');
-        // 필요시 연결 상태 확인 로직 추가
+        // 연결 상태만 확인하고 재연결은 하지 않음
       } else {
         console.log('👁️ 페이지가 다시 보임');
-        // 연결 상태 확인 및 재연결 로직
+        // 연결 상태 확인만 하고 자동 재연결은 하지 않음
         if (!webSocketService.isWebSocketConnected()) {
-          console.log('🔄 연결이 끊어져 있어 재연결 시도');
-          stompConnect();
+          console.log('⚠️ 연결이 끊어져 있음 - 수동 재연결 필요');
         }
       }
     };
